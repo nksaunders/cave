@@ -13,14 +13,20 @@ from everest.config import KEPPRF_DIR
 import os
 
 
-class ApertureTest(object):
+class ApertureFit(object):
 
     def __init__(self, ID, amplitude):
 
+        # initialize variables
         self.A = amplitude
         self.ID = ID
 
     def Transit(self, per, dur, depth):
+        '''
+        Generates a transit model with the EVEREST Transit() function.
+        Takes parameters: period (per), duration (dur), and depth.
+        Returns: transit model
+        '''
 
         self.depth = depth
 
@@ -31,6 +37,11 @@ class ApertureTest(object):
         return self.trn
 
     def GeneratePSF(self):
+        '''
+        Generate a PSF model that includes modeled inter-pixel sensitivity variation.
+        Model includes photon noise and background nosie.
+        Returns: fpix and ferr
+        '''
 
         # read in relevant data
         ID = 205998445
@@ -113,6 +124,11 @@ class ApertureTest(object):
 
 
     def CenterOfFlux(self, fpix):
+        '''
+        Finds the center of flux for the PSF (similar to a center of mass calculation)
+        Returns: arrays for x0 and y0 positions over the full light curve
+        '''
+
         ncad, ny, nx = fpix.shape
         x0 = np.zeros(ncad)
         y0 = np.zeros(ncad)
@@ -123,6 +139,11 @@ class ApertureTest(object):
         return x0,y0
 
     def Crowding(self, fpix):
+        '''
+        Calculates and returns pixel crowding (c_pix) and detector crowding (c_det)
+        Crowding defined by F_target / F_total
+        '''
+
         # crowding parameter for each pixel
         self.c_pix = np.zeros((len(fpix),5,5))
 
@@ -142,7 +163,12 @@ class ApertureTest(object):
         return self.c_det, self.c_pix
 
     def FirstOrderPLD(self, fpix):
+        '''
+        Perform first order PLD on a light curve
+        Returns: detrended light curve, raw light curve
+        '''
 
+        #  generate flux light curve
         fpix_rs = fpix.reshape(len(fpix),-1)
         flux = np.sum(fpix_rs,axis=1)
 
@@ -167,6 +193,7 @@ class ApertureTest(object):
     def RecoverTransit(self, lightcurve_in):
         '''
         Solve for depth of transit in detrended lightcurve
+        Returns: recovered depth of transit in light curve
         '''
 
         detrended = lightcurve_in
@@ -190,6 +217,11 @@ class ApertureTest(object):
         return rec_depth
 
     def AperturePLD(self, fpix, aperture):
+        '''
+        Performs PLD on only a desired region of the detector
+        Takes parameters: light curve (fpix), and aperture containing desired region
+        Returns: aperture, detrendended light curve, raw light curve in aperture
+        '''
 
         aperture = [aperture for i in range(len(fpix))]
 
