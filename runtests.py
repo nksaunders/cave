@@ -77,7 +77,16 @@ if status == 0:
 
     guess = np.concatenate([amp,x0,y0,sx,sy,rho,background])
     answer = fit.FindSolution(guess, index=200)
+    neighborvals = np.zeros((len(answer)))
+    for i in range(len(answer)):
+        if i == 0:
+            neighborvals[i] = 0
+        else:
+            neighborvals[i] = answer[i]
+
     fit1 = fit.PSF(answer)
+    neighborfit = fit.PSF(neighborvals)
+    residual = fit1 - neighborfit
 
     fig, ax = pl.subplots(1,2, sharey=True)
     fig.set_size_inches(11,5)
@@ -91,5 +100,9 @@ if status == 0:
 
     pl.imshow(fit1-fpix[200],interpolation='nearest',origin='lower',cmap='viridis');pl.colorbar();
 
+    fig = pl.figure()
+    pl.imshow(residual,interpolation='nearest',origin='lower',cmap='viridis'); pl.colorbar()
     print(datetime.now() - startTime)
     pl.show()
+
+    # import pdb; pdb.set_trace()

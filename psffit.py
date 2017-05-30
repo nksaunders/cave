@@ -54,17 +54,15 @@ class PSFFit(object):
         amp1,amp2,x01,x02,y01,y02,sx,sy,rho,background = params
         index = self.index
 
-        # contrain sigma values
+        # constrain parameter values
         if sx > 1 or sx < 0:
             return 1.0e30
         if sy > 1 or sy < 0:
             return 1.0e30
 
-        # contrain rho values
         if rho >= 1 or rho <= -1:
             return 1.0e30
 
-        # constrain position values
         if ((2.5 - x01)**2 + (2.5 - y01)**2) > 4:
             return 1.0e30
         if ((4. - x02)**2 + (4. - y02)**2) > 4:
@@ -79,7 +77,7 @@ class PSFFit(object):
 
         # sum squared difference between data and model
         PSFres = np.nansum(((self.fpix[index] - PSFfit) / self.ferr[index]) ** 2)
-        
+
         '''
         s_s = 1.
         sx0 = 0.5 + s_s * np.random.randn()
