@@ -2,6 +2,7 @@ import aperturefit as af
 import numpy as np
 import matplotlib.pyplot as pl
 import psffit as pf
+import simulateK2
 from datetime import datetime
 # %matplotlib inline
 
@@ -13,10 +14,9 @@ status = 0: perform PSF fitting
 status = 1: perform aperture PLD
 '''
 
-t = af.ApertureFit(205998445, 355000.0)
-trn = t.Transit(per = 15, dur = 0.5, depth = 0.01)
-
-fpix,ferr = t.GeneratePSF()
+sK2 = simulateK2.Target(205998445, 355000.0)
+trn = sK2.Transit()
+fpix, ferr = sK2.GeneratePSF()
 
 if status == 1:
     c_pix, c_det = t.Crowding(fpix)
@@ -88,17 +88,18 @@ if status == 0:
     neighborfit = fit.PSF(neighborvals)
     residual = fit1 - neighborfit
 
-    fig, ax = pl.subplots(1,2, sharey=True)
-    fig.set_size_inches(11,5)
+    fig, ax = pl.subplots(1,3, sharey=True)
+    fig.set_size_inches(17,5)
 
     meanfpix = np.mean(fpix,axis=0)
+    ax[0].imshow(fpix[200],interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(fit1),vmax=np.max(fit1));
+    ax[1].imshow(fit1,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(fit1),vmax=np.max(fit1));
+    ax[2].imshow(fpix[200]-neighborfit,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(fit1),vmax=np.max(fit1));
+    ax[0].set_title('Data');
+    ax[1].set_title('Fit');
+    ax[2].set_title('Neighbor Subtraction');
 
-    ax[0].imshow(fit1,interpolation='nearest',origin='lower',cmap='viridis');
-    ax[1].imshow(fit1 - fpix[200],interpolation='nearest',origin='lower',cmap='viridis');
-    ax[0].set_title('Fit');
-    ax[1].set_title('Residuals');
-
-    pl.imshow(fit1-fpix[200],interpolation='nearest',origin='lower',cmap='viridis');pl.colorbar();
+    # pl.imshow(fit1-fpix[200],interpolation='nearest',origin='lower',cmap='viridis');pl.colorbar();
 
     fig = pl.figure()
     pl.imshow(residual,interpolation='nearest',origin='lower',cmap='viridis'); pl.colorbar()
