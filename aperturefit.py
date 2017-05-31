@@ -3,7 +3,7 @@ import matplotlib.pyplot as pl
 import everest
 from everest.math import SavGol
 from intrapix import PixelFlux
-import simulateK2
+import simulateK2 as sk
 from random import randint
 from astropy.io import fits
 import pyfits
@@ -15,18 +15,24 @@ import os
 
 class ApertureFit(object):
 
-    def __init__(self, ID, amplitude):
+    def __init__(self, fpix, ferr, target, trn):
 
         # initialize variables
-        sK2 = simulateK2.Target(ID, amplitude)
-        self.trn = sK2.Transit()
-        self.fpix, self.ferr = sK2.GeneratePSF()
+        self.fpix = fpix
+        self.ferr = ferr
+        self.target = target
+        self.trn = trn
 
-    def Crowding(self, fpix):
+        # mask transits
+        self.naninds = np.where(self.trn < 1)
+        self.M = lambda x: np.delete(x, self.naninds, axis = 0)
+
+    def Crowding(self):
         '''
         Calculates and returns pixel crowding (c_pix) and detector crowding (c_det)
         Crowding defined by F_target / F_total
         '''
+        fpix = self.fpix
 
         # crowding parameter for each pixel
         self.c_pix = np.zeros((len(fpix),5,5))
@@ -46,11 +52,12 @@ class ApertureFit(object):
 
         return self.c_det, self.c_pix
 
-    def FirstOrderPLD(self, fpix):
+    def FirstOrderPLD(self):
         '''
         Perform first order PLD on a light curve
         Returns: detrended light curve, raw light curve
         '''
+        fpix = self.fpix
 
         #  generate flux light curve
         fpix_rs = fpix.reshape(len(fpix),-1)
@@ -81,9 +88,10 @@ class ApertureFit(object):
         '''
 
         detrended = lightcurve_in
+        depth = 0.01
 
         # normalize transit model
-        transit_model = (self.trn - 1) / self.depth
+        transit_model = (self.trn - 1) / depth
 
         # create relevant arrays
         X = np.array(([],[]), dtype = float).T
@@ -100,13 +108,13 @@ class ApertureFit(object):
 
         return rec_depth
 
-    def AperturePLD(self, fpix, aperture):
+    def AperturePLD(self, aperture):
         '''
         Performs PLD on only a desired region of the detector
         Takes parameters: light curve (fpix), and aperture containing desired region
         Returns: aperture, detrendended light curve, raw light curve in aperture
         '''
-
+        fpix = self.fpix
         aperture = [aperture for i in range(len(fpix))]
 
         # import pdb; pdb.set_trace()

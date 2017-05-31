@@ -121,7 +121,7 @@ class Target(object):
             self.fpix[c] *= intra
             self.target[c] *= intra
 
-        return self.fpix, self.ferr
+        return self.fpix, self.target, self.ferr
 
 
     def CenterOfFlux(self, fpix):
