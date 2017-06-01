@@ -5,50 +5,69 @@ import psffit as pf
 import simulateK2
 from datetime import datetime
 
-sK2 = simulateK2.Target(205998445, 355000.0)
-trn = sK2.Transit()
-fpix,target, ferr = sK2.GeneratePSF()
 
-t = af.ApertureFit(fpix,target,ferr,trn)
-c_pix, c_det = t.Crowding()
+class PSFrun(object):
 
-fit = pf.PSFFit(fpix,ferr)
+    def __init__(self):
 
-amp = [355000.0,(355000.0 / 2)]
-x0 = [2.5,4.]
-y0 = [2.5,4.]
-sx = [.5]
-sy = [.5]
-rho = [0.01]
-background = [800]
+        # self.ID = input("Enter EPIC ID: ")
+        self.ID = 205998445
+        self.startTime = datetime.now()
 
-guess = np.concatenate([amp,x0,y0,sx,sy,rho,background])
-answer = fit.FindSolution(guess, index=200)
-neighborvals = np.zeros((len(answer)))
-for i in range(len(answer)):
-    if i == 0:
-        neighborvals[i] = 0
-    else:
-        neighborvals[i] = answer[i]
+        sK2 = simulateK2.Target(int(self.ID), 355000.0)
+        trn = sK2.Transit()
+        self.fpix,target, self.ferr = sK2.GeneratePSF()
 
-fit1 = fit.PSF(answer)
-neighborfit = fit.PSF(neighborvals)
-residual = fit1 - neighborfit
+        t = af.ApertureFit(self.fpix,target,self.ferr,trn)
+        c_pix, c_det = t.Crowding()
 
-fig, ax = pl.subplots(1,3, sharey=True)
-fig.set_size_inches(17,5)
+        self.fit = pf.PSFFit(self.fpix,self.ferr)
 
-meanfpix = np.mean(fpix,axis=0)
-ax[0].imshow(fpix[200],interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(fit1),vmax=np.max(fit1));
-ax[1].imshow(fit1,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(fit1),vmax=np.max(fit1));
-ax[2].imshow(fpix[200]-neighborfit,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(fit1),vmax=np.max(fit1));
-ax[0].set_title('Data');
-ax[1].set_title('Fit');
-ax[2].set_title('Neighbor Subtraction');
+    def FindFit(self):
 
-# pl.imshow(fit1-fpix[200],interpolation='nearest',origin='lower',cmap='viridis');pl.colorbar();
+        amp = [345000.0,(352000.0 / 2)]
+        x0 = [2.6,3.7]
+        y0 = [2.3,4.2]
+        sx = [.4]
+        sy = [.6]
+        rho = [0.01]
+        background = [1000]
 
-fig = pl.figure()
-pl.imshow(residual,interpolation='nearest',origin='lower',cmap='viridis'); pl.colorbar()
-print(datetime.now() - startTime)
-pl.show()
+        guess = np.concatenate([amp,x0,y0,sx,sy,rho,background])
+        answer = self.fit.FindSolution(guess, index=200)
+        neighborvals = np.zeros((len(answer)))
+        for i in range(len(answer)):
+            if i == 0:
+                neighborvals[i] = 0
+            else:
+                neighborvals[i] = answer[i]
+
+        self.answerfit = self.fit.PSF(answer)
+        self.neighborfit = self.fit.PSF(neighborvals)
+        self.subtraction = self.answerfit - self.neighborfit
+        self.residual = self.fpix[200] - self.answerfit
+
+    def Plot(self):
+
+        fig, ax = pl.subplots(1,3, sharey=True)
+        fig.set_size_inches(17,5)
+
+        meanfpix = np.mean(self.fpix,axis=0)
+        ax[0].imshow(self.fpix[200],interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(self.answerfit),vmax=np.max(self.answerfit));
+        ax[1].imshow(self.answerfit,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(self.answerfit),vmax=np.max(self.answerfit));
+        ax[2].imshow(self.subtraction,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(self.answerfit),vmax=np.max(self.answerfit));
+        ax[0].set_title('Data');
+        ax[1].set_title('Model');
+        ax[2].set_title('Neighbor Subtraction');
+
+        # pl.imshow(self.answerfit-self.fpix[200],interpolation='nearest',origin='lower',cmap='viridis');pl.colorbar();
+
+        fig = pl.figure()
+        pl.imshow(self.residual,interpolation='nearest',origin='lower',cmap='viridis'); pl.colorbar()
+        pl.title("Residuals")
+        print(datetime.now() - self.startTime)
+        pl.show()
+
+r = PSFrun()
+r.FindFit()
+r.Plot()
