@@ -52,12 +52,12 @@ class ApertureFit(object):
 
         return self.c_det, self.c_pix
 
-    def FirstOrderPLD(self):
+    def FirstOrderPLD(self,fpix):
         '''
         Perform first order PLD on a light curve
         Returns: detrended light curve, raw light curve
         '''
-        fpix = self.fpix
+        # fpix = self.fpix
 
         #  generate flux light curve
         fpix_rs = fpix.reshape(len(fpix),-1)

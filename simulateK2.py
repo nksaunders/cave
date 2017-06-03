@@ -51,21 +51,21 @@ class Target(object):
         tpf = star.get_target_pixel_files(fetch = True)[0]
         ftpf = os.path.join(KPLR_ROOT, 'data', 'k2', 'target_pixel_files', '%d' % self.ID, tpf._filename)
         with pyfits.open(ftpf) as f:
-            xpos = f[1].data['pos_corr1']
-            ypos = f[1].data['pos_corr2']
+            self.xpos = f[1].data['pos_corr1']
+            self.ypos = f[1].data['pos_corr2']
 
         # throw out outliers
-        for i in range(len(xpos)):
-            if abs(xpos[i]) >= 50 or abs(ypos[i]) >= 50:
-                xpos[i] = 0
-                ypos[i] = 0
-            if np.isnan(xpos[i]):
-                xpos[i] = 0
-            if np.isnan(ypos[i]):
-                ypos[i] = 0
+        for i in range(len(self.xpos)):
+            if abs(self.xpos[i]) >= 50 or abs(self.ypos[i]) >= 50:
+                self.xpos[i] = 0
+                self.ypos[i] = 0
+            if np.isnan(self.xpos[i]):
+                self.xpos[i] = 0
+            if np.isnan(self.ypos[i]):
+                self.ypos[i] = 0
 
-        xpos = xpos[:1000]
-        ypos = ypos[:1000]
+        self.xpos = self.xpos[:1000]
+        self.ypos = self.ypos[:1000]
 
         # define intra-pixel sensitivity variation
         intra = np.zeros((5,5))
@@ -99,10 +99,10 @@ class Target(object):
             for i in range(5):
                 for j in range(5):
                     # contribution from target
-                    target_val = self.trn[c]*PixelFlux(cx,cy,[self.A],[x0-i+xpos[c]],[y0-j+ypos[c]],sx,sy,rho)
+                    target_val = self.trn[c]*PixelFlux(cx,cy,[self.A],[x0-i+self.xpos[c]],[y0-j+self.ypos[c]],sx,sy,rho)
 
                     # contribution from neighbor
-                    val = target_val + (1/r)*PixelFlux(cx,cy,[self.A],[neighborcoords[0]-i+xpos[c]],[neighborcoords[1]-j+ypos[c]],sx,sy,rho)
+                    val = target_val + (1/r)*PixelFlux(cx,cy,[self.A],[neighborcoords[0]-i+self.xpos[c]],[neighborcoords[1]-j+self.ypos[c]],sx,sy,rho)
 
                     self.target[c][i][j] = target_val
                     self.fpix[c][i][j] = val

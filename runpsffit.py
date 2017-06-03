@@ -21,6 +21,9 @@ class PSFrun(object):
         t = af.ApertureFit(self.fpix,target,self.ferr,trn)
         c_pix, c_det = t.Crowding()
 
+
+        self.xpos = sK2.xpos
+        self.ypos = sK2.ypos
         self.fit = pf.PSFFit(self.fpix,self.ferr)
 
     def FindFit(self):
@@ -32,18 +35,41 @@ class PSFrun(object):
         sy = [.6]
         rho = [0.01]
         background = [1000]
-
+        index = 200
         guess = np.concatenate([amp,x0,y0,sx,sy,rho,background])
-        answer = self.fit.FindSolution(guess, index=200)
-        neighborvals = np.zeros((len(answer)))
+        answer = self.fit.FindSolution(guess, index=index)
+        invariant_vals = np.zeros((len(answer)))
+        self.n_fpix = []
+
+
         for i in range(len(answer)):
             if i == 0:
-                neighborvals[i] = 0
-            else:
-                neighborvals[i] = answer[i]
+                if i == 0:
+                    invariant_vals[i] = 0
+                elif i == 2:
+                    invariant_vals[i] = answer[i] - self.xpos[index]
+                elif i == 4:
+                    invariant_vals[i] = answer[i] - self.ypos[index]
+                else:
+                    invariant_vals[i] = answer[i]
+
+        for cadence in range(10):
+            n_vals = np.zeros((len(invariant_vals)))
+            for i in range(len(answer)):
+                if i == 2:
+                    n_vals[i] = invariant_vals[i] + self.xpos[cadence]
+                elif i == 4:
+                    n_vals[i] = invariant_vals[i] + self.ypos[cadence]
+                else:
+                    n_vals[i] = invariant_vals[i]
+
+            n_fit = self.fit.PSF(n_vals)
+            self.n_fpix.append(n_fit)
+
+        self.subtracted_fpix = [self.fpix[n] - self.n_fpix[n] for n in range(10)]
 
         self.answerfit = self.fit.PSF(answer)
-        self.neighborfit = self.fit.PSF(neighborvals)
+        self.neighborfit = self.fit.PSF(invariant_vals)
         self.subtraction = self.answerfit - self.neighborfit
         self.residual = self.fpix[200] - self.answerfit
 
@@ -67,6 +93,7 @@ class PSFrun(object):
         pl.title("Residuals")
         print(datetime.now() - self.startTime)
         pl.show()
+        import pdb; pdb.set_trace()
 
 r = PSFrun()
 r.FindFit()
