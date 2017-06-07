@@ -9,8 +9,8 @@ sK2 = simulateK2.Target(205998445, 355000.0)
 trn = sK2.Transit()
 fpix,target, ferr = sK2.GeneratePSF()
 
-t = af.ApertureFit(fpix,target,ferr,trn)
-c_pix, c_det = t.Crowding()
+t = af.ApertureFit(trn)
+c_pix, c_det = t.Crowding(fpix,target)
 
 # define aperture
 aperture1 = np.zeros((5,5))
@@ -28,8 +28,8 @@ for i in range(5):
             aperture1[i][j] = np.nan
             aperture2[i][j] = np.nan
 
-ap1, apdetrended1, apflux1 = t.AperturePLD(aperture1)
-ap2, apdetrended2, apflux2 = t.AperturePLD(aperture2)
+ap1, apdetrended1, apflux1 = t.AperturePLD(aperture1,fpix)
+ap2, apdetrended2, apflux2 = t.AperturePLD(aperture2,fpix)
 rd_ap1 = t.RecoverTransit(apdetrended1)
 rd_ap2 = t.RecoverTransit(apdetrended2)
 

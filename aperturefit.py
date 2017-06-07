@@ -15,24 +15,21 @@ import os
 
 class ApertureFit(object):
 
-    def __init__(self, fpix, ferr, target, trn):
+    def __init__(self, trn):
 
         # initialize variables
-        self.fpix = fpix
-        self.ferr = ferr
-        self.target = target
         self.trn = trn
 
         # mask transits
         self.naninds = np.where(self.trn < 1)
         self.M = lambda x: np.delete(x, self.naninds, axis = 0)
 
-    def Crowding(self):
+    def Crowding(self,fpix,target):
         '''
         Calculates and returns pixel crowding (c_pix) and detector crowding (c_det)
         Crowding defined by F_target / F_total
         '''
-        fpix = self.fpix
+        # fpix = self.fpix
 
         # crowding parameter for each pixel
         self.c_pix = np.zeros((len(fpix),5,5))
@@ -46,9 +43,9 @@ class ApertureFit(object):
                     if np.isnan(fpix[c][i][j]):
                         continue
                     else:
-                        self.c_pix[c][i][j] = self.target[c][i][j] / fpix[c][i][j]
+                        self.c_pix[c][i][j] = target[c][i][j] / fpix[c][i][j]
 
-            self.c_det[c] = np.nansum(self.target[c]) / np.nansum(fpix[c])
+            self.c_det[c] = np.nansum(target[c]) / np.nansum(fpix[c])
 
         return self.c_det, self.c_pix
 
@@ -57,7 +54,6 @@ class ApertureFit(object):
         Perform first order PLD on a light curve
         Returns: detrended light curve, raw light curve
         '''
-        # fpix = self.fpix
 
         #  generate flux light curve
         fpix_rs = fpix.reshape(len(fpix),-1)
@@ -76,8 +72,9 @@ class ApertureFit(object):
         model = np.dot(X, C)
         detrended = flux - model + np.nanmean(flux)
 
-        D = (detrended - np.dot(C[1:], X[:,1:].T) + np.nanmedian(detrended)) / np.nanmedian(detrended)
-        T = (t - 5.0 - per / 2.) % per - per / 2.
+        # folded
+        # D = (detrended - np.dot(C[1:], X[:,1:].T) + np.nanmedian(detrended)) / np.nanmedian(detrended)
+        # T = (t - 5.0 - per / 2.) % per - per / 2.
 
         return detrended, flux
 
@@ -95,7 +92,7 @@ class ApertureFit(object):
 
         # create relevant arrays
         X = np.array(([],[]), dtype = float).T
-        for i in range(len(self.fpix)):
+        for i in range(len(detrended)):
             rowx = np.array([[1.,transit_model[i]]])
             X = np.vstack((X, rowx))
         Y = detrended / np.nanmedian(detrended)
@@ -108,13 +105,13 @@ class ApertureFit(object):
 
         return rec_depth
 
-    def AperturePLD(self, aperture):
+    def AperturePLD(self, aperture, fpix):
         '''
         Performs PLD on only a desired region of the detector
         Takes parameters: light curve (fpix), and aperture containing desired region
         Returns: aperture, detrendended light curve, raw light curve in aperture
         '''
-        fpix = self.fpix
+
         aperture = [aperture for i in range(len(fpix))]
 
         # import pdb; pdb.set_trace()
