@@ -9,6 +9,7 @@ from everest import Transit
 import k2plr
 import os
 from scipy.optimize import fmin_powell
+from tqdm import tqdm
 
 class PSFFit(object):
 
@@ -78,17 +79,8 @@ class PSFFit(object):
         # sum squared difference between data and model
         PSFres = np.nansum(((self.fpix[index] - PSFfit) / self.ferr[index]) ** 2)
 
-        '''
-        s_s = 1.
-        sx0 = 0.5 + s_s * np.random.randn()
-        sy0 = 0.5 + s_s * np.random.randn()
-        PSFres += ((sx - sx0) / s_s)**2
-        PSFres += ((sy - sy0) / s_s)**2
-        PSFres += (rho / s_s)**2
-        '''
-
-        print("R = %.2e, x1 = %.2f, x2 = %.2f, y1 = %.2f, y2 = %.2f, sx = %.2f, sy = %.2f, rho = %.2f, a1 = %.2f, a2 = %.2f, b = %.2e" % \
-             (PSFres, x01, x02, y01, y02, sx, sy, rho, amp1, amp2,background))
+        # print("R = %.2e, x1 = %.2f, x2 = %.2f, y1 = %.2f, y2 = %.2f, sx = %.2f, sy = %.2f, rho = %.2f, a1 = %.2f, a2 = %.2f, b = %.2e" % \
+        #      (PSFres, x01, x02, y01, y02, sx, sy, rho, amp1, amp2,background))
 
         return PSFres
 
@@ -99,9 +91,12 @@ class PSFFit(object):
         self.guess = guess
         self.index = index
 
-        answer, chisq, _, iter, funcalls, warn = fmin_powell(self.Residuals, self.guess, xtol = self.xtol, ftol = self.ftol,
-                                                             disp = False, full_output = True)
+        print("Calculating model...")
+        answer, chisq, _, iter, funcalls, warn = tqdm(fmin_powell(self.Residuals, self.guess, xtol = self.xtol, ftol = self.ftol,
+                                                             disp = False, full_output = True))
 
         self.bic = chisq + len(answer) * np.log(len(self.fpix))
+
+        print("Parameters found!")
 
         return answer

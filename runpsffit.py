@@ -55,6 +55,7 @@ class PSFrun(object):
             else:
                 invariant_vals[i] = v
 
+        print("Subtracting neighbor...")
         for cadence in tqdm(range(len(self.fpix))):
             n_vals = np.zeros((len(invariant_vals)))
             for i,v in enumerate(invariant_vals):
@@ -94,9 +95,10 @@ class PSFrun(object):
         fig = pl.figure()
         pl.imshow(self.residual,interpolation='nearest',origin='lower',cmap='viridis'); pl.colorbar()
         pl.title("Residuals")
+        print("Run time:")
         print(datetime.now() - self.startTime)
         pl.show()
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         ddd = self.aft.RecoverTransit(self.subtracted_flux)
         pl.plot(self.t,self.subtracted_flux,'k.')
         pl.show()
