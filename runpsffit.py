@@ -17,7 +17,8 @@ class PSFrun(object):
 
         sK2 = simulateK2.Target(int(self.ID), 355000.0)
         trn = sK2.Transit()
-        self.fpix, target, self.ferr = sK2.GeneratePSF()
+        print("Generating PSF model...")
+        self.fpix, target, self.ferr = tqdm(sK2.GeneratePSF())
         self.t = np.linspace(0,90,len(self.fpix))
 
         self.aft = af.ApertureFit(trn)
@@ -79,27 +80,28 @@ class PSFrun(object):
 
     def Plot(self):
 
-        fig, ax = pl.subplots(1,3, sharey=True)
-        fig.set_size_inches(17,5)
+        fig, ax = pl.subplots(1,4, sharey=True)
+        fig.set_size_inches(22,5)
 
         meanfpix = np.mean(self.fpix,axis=0)
         ax[0].imshow(self.fpix[200],interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(self.answerfit),vmax=np.max(self.answerfit));
         ax[1].imshow(self.answerfit,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(self.answerfit),vmax=np.max(self.answerfit));
         ax[2].imshow(self.subtraction,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(self.answerfit),vmax=np.max(self.answerfit));
+        ax[3].imshow(self.residual,interpolation='nearest',origin='lower',cmap='viridis',vmin=np.min(self.answerfit),vmax=np.max(self.answerfit));
         ax[0].set_title('Data');
         ax[1].set_title('Model');
         ax[2].set_title('Neighbor Subtraction');
+        ax[3].set_title("Residuals");
 
         # pl.imshow(self.answerfit-self.fpix[200],interpolation='nearest',origin='lower',cmap='viridis');pl.colorbar();
 
-        fig = pl.figure()
-        pl.imshow(self.residual,interpolation='nearest',origin='lower',cmap='viridis'); pl.colorbar()
-        pl.title("Residuals")
+        pl.imshow(self.residual,interpolation='nearest',origin='lower',cmap='viridis');
         print("Run time:")
         print(datetime.now() - self.startTime)
         pl.show()
         # import pdb; pdb.set_trace()
         ddd = self.aft.RecoverTransit(self.subtracted_flux)
+        pl.plot()
         pl.plot(self.t,self.subtracted_flux,'k.')
         pl.show()
 
