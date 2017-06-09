@@ -16,12 +16,12 @@ class PSFrun(object):
         self.startTime = datetime.now()
 
         sK2 = simulateK2.Target(int(self.ID), 355000.0)
-        trn = sK2.Transit()
-        print("Generating PSF model...")
-        self.fpix, target, self.ferr = tqdm(sK2.GeneratePSF())
+        self.trn = sK2.Transit()
+        print("Simulating K2 target...")
+        self.fpix, target, self.ferr = sK2.GeneratePSF()
         self.t = np.linspace(0,90,len(self.fpix))
 
-        self.aft = af.ApertureFit(trn)
+        self.aft = af.ApertureFit(self.trn)
         c_pix, c_det = self.aft.Crowding(self.fpix,target)
 
 
@@ -93,16 +93,20 @@ class PSFrun(object):
         ax[2].set_title('Neighbor Subtraction');
         ax[3].set_title("Residuals");
 
-        # pl.imshow(self.answerfit-self.fpix[200],interpolation='nearest',origin='lower',cmap='viridis');pl.colorbar();
-
-        pl.imshow(self.residual,interpolation='nearest',origin='lower',cmap='viridis');
         print("Run time:")
         print(datetime.now() - self.startTime)
         pl.show()
         # import pdb; pdb.set_trace()
-        ddd = self.aft.RecoverTransit(self.subtracted_flux)
-        pl.plot()
-        pl.plot(self.t,self.subtracted_flux,'k.')
+
+        unsub_flux = self.aft.FirstOrderPLD(self.fpix)[0]
+        fig, ax = pl.subplots(2,1)
+        ns_depth = self.aft.RecoverTransit(self.subtracted_flux)
+        ax[0].plot(self.t,np.mean(self.subtracted_flux)*self.trn,'r')
+        ax[0].plot(self.t,self.subtracted_flux,'k.')
+        ax[1].plot(self.t,np.mean(unsub_flux)*self.trn,'r')
+        ax[1].plot(self.t,unsub_flux,'k.')
+
+        print("RTD: %.4f,   Subtracted RTD: %.4f" % (self.aft.RecoverTransit(unsub_flux),ns_depth))
         pl.show()
 
 r = PSFrun()
