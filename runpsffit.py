@@ -5,6 +5,7 @@ import psffit as pf
 import simulateK2
 from datetime import datetime
 from tqdm import tqdm
+from everest import detrender
 
 
 class PSFrun(object):
@@ -77,6 +78,7 @@ class PSFrun(object):
         self.subtraction = self.answerfit - self.neighborfit
         self.residual = self.fpix[200] - self.answerfit
         self.subtracted_flux = self.aft.FirstOrderPLD(self.subtracted_fpix)[0]
+        return self.subtraction
 
     def Plot(self):
 
@@ -118,5 +120,5 @@ class PSFrun(object):
         pl.show()
 
 r = PSFrun()
-r.FindFit()
+sub = r.FindFit()
 r.Plot()
