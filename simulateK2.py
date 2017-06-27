@@ -24,6 +24,9 @@ class Target(object):
         self.dur = dur
         self.depth = depth
 
+        # set aperture size (number of pixels to a side)
+        self.aps = 8
+
     def Transit(self):
         '''
         Generates a transit model with the EVEREST Transit() function.
@@ -31,13 +34,13 @@ class Target(object):
         Returns: transit model
         '''
 
-        self.fpix = np.zeros((1000,5,5))
+        self.fpix = np.zeros((1000,self.aps,self.aps))
         self.t = np.linspace(0,90,len(self.fpix))
         self.trn = Transit(self.t, t0 = 5.0, per = self.per, dur = self.dur, depth = self.depth)
 
         return self.trn
 
-    def GeneratePSF(self):
+    def GeneratePSF(self, motion_mag = 1.0):
         '''
         Generate a PSF model that includes modeled inter-pixel sensitivity variation.
         Model includes photon noise and background nosie.
@@ -64,13 +67,13 @@ class Target(object):
             if np.isnan(self.ypos[i]):
                 self.ypos[i] = 0
 
-        self.xpos = self.xpos[:1000]
-        self.ypos = self.ypos[:1000]
+        self.xpos = self.xpos[:1000] * motion_mag
+        self.ypos = self.ypos[:1000] * motion_mag
 
         # define intra-pixel sensitivity variation
-        intra = np.zeros((5,5))
-        for i in range(5):
-            for j in range(5):
+        intra = np.zeros((self.aps,self.aps))
+        for i in range(self.aps):
+            for j in range(self.aps):
                 intra[i][j] = (0.995 + np.random.randint(10) / 1000)
 
         # mask transits
@@ -81,8 +84,8 @@ class Target(object):
 
         cx = [1.0,0.0,0.0]
         cy = [1.0,0.0,0.0]
-        x0 = 2.5
-        y0 = 2.5
+        x0 = self.aps / 2.0
+        y0 = self.aps / 2.0
         sx = [0.7]
         sy = [0.4]
         rho = [0.05]
@@ -91,21 +94,27 @@ class Target(object):
         magdiff = 1.0
         r = 10**(magdiff / 2.5)
 
-        self.target = np.zeros((len(self.fpix),5,5))
-        self.ferr = np.zeros((len(self.fpix),5,5))
+        self.target = np.zeros((len(self.fpix),8,8))
+        self.ferr = np.zeros((len(self.fpix),8,8))
         background_level = 800
 
+        is_neighbor = False
+
         for c in range(1000):
-            for i in range(5):
-                for j in range(5):
+            for i in range(self.aps):
+                for j in range(self.aps):
                     # contribution from target
                     target_val = self.trn[c]*PixelFlux(cx,cy,[self.A],[x0-i+self.xpos[c]],[y0-j+self.ypos[c]],sx,sy,rho)
 
-                    # contribution from neighbor
-                    val = target_val + (1/r)*PixelFlux(cx,cy,[self.A],[neighborcoords[0]-i+self.xpos[c]],[neighborcoords[1]-j+self.ypos[c]],sx,sy,rho)
+                    if is_neighbor == True:
+                        # contribution from neighbor
+                        val = target_val + (1/r)*PixelFlux(cx,cy,[self.A],[neighborcoords[0]-i+self.xpos[c]],[neighborcoords[1]-j+self.ypos[c]],sx,sy,rho)
+                        self.fpix[c][i][j] = val
+                    else:
+                        self.fpix[c][i][j] = target_val
 
                     self.target[c][i][j] = target_val
-                    self.fpix[c][i][j] = val
+
 
                     # add photon noise
                     self.ferr[c][i][j] = np.sqrt(self.fpix[c][i][j])
