@@ -14,24 +14,25 @@ class MotionNoise(object):
 
         self.ID = 205998445
         self.startTime = datetime.now()
-        self.sK2 = simulateK2.Target(int(self.ID), 355000.0)
+        self.sK2 = simulateK2.Target(int(self.ID), 68000.0)
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
     def SimulateStar(self, f):
 
+        # generate a simulated PSF
         self.fpix, self.target, self.ferr = self.sK2.GeneratePSF(motion_mag = f)
         self.t = np.linspace(0,90,len(self.fpix))
 
         self.xpos = self.sK2.xpos
         self.ypos = self.sK2.ypos
 
-        dtrn, flux = self.aft.FirstOrderPLD(self.target)
-        return dtrn,flux
+        dtrn, flux = self.aft.FirstOrderPLD(self.fpix)
+        return flux
 
-    def Create(self, f_n = 6):
+    def Create(self, f_n = 5):
 
-        fset = [i for i in range(f_n)]
+        self.fset = [(i+1) for i in range(f_n)]
 
         self.flux_set = []
         self.CDPP_set = []
@@ -39,14 +40,14 @@ class MotionNoise(object):
 
         print("Testing Motion Magnitudes...")
 
-        d1,f1 = self.SimulateStar(0)
+        f1 = self.SimulateStar(0)
         self.true_cdpp = self.CDPP(f1)
 
-        for f in tqdm(fset):
+        for f in tqdm(self.fset):
             temp_CDPP_set = []
 
-            for i in tqdm(range(f_n)):
-                dtrnd,flux = self.SimulateStar(f)
+            for i in tqdm(range(5)):
+                flux = self.SimulateStar(f)
                 cdpp = self.CDPP(flux)
                 temp_CDPP_set.append(cdpp)
                 if i == 0:
@@ -95,14 +96,19 @@ class MotionNoise(object):
                             xy = (0.85, 0.05),xycoords='axes fraction',
                             color='k', fontsize=12);
 
-        ax[f_n].set_xlabel("Time (days)")
+        ax[f_n-1].set_xlabel("Time (days)")
 
         fig2 = pl.figure()
 
-        pl.plot(self.CDPP_set,'r')
+        self.CDPP_set_norm = [(n / self.true_cdpp) for n in self.CDPP_set]
+
+        print(self.CDPP_set)
+        print(self.CDPP_set_norm)
+
+        pl.plot(self.fset,self.CDPP_set_norm,'r')
         pl.xlabel("f")
-        pl.ylabel("CDPP")
-        pl.title("CDPP vs. Motion Magnitude")
+        pl.ylabel("Normalized CDPP")
+        pl.title("Normalized CDPP vs. Motion Magnitude")
         pl.show()
         import pdb; pdb.set_trace()
 
