@@ -82,8 +82,8 @@ class Target(object):
 
         # generate PRF model with inter-pixel sensitivity variation
 
-        cx = [1.0,0.0,0.0]
-        cy = [1.0,0.0,0.0]
+        cx = [1.0,0.0,-0.2]
+        cy = [1.0,0.0,-0.2]
         x0 = self.aps / 2.0
         y0 = self.aps / 2.0
         sx = [0.7]
@@ -94,8 +94,8 @@ class Target(object):
         magdiff = 1.0
         r = 10**(magdiff / 2.5)
 
-        self.target = np.zeros((len(self.fpix),8,8))
-        self.ferr = np.zeros((len(self.fpix),8,8))
+        self.target = np.zeros((len(self.fpix),self.aps,self.aps))
+        self.ferr = np.zeros((len(self.fpix),self.aps,self.aps))
         background_level = 800
 
         is_neighbor = False
@@ -106,7 +106,7 @@ class Target(object):
                     # contribution from target
                     target_val = self.trn[c]*PixelFlux(cx,cy,[self.A],[x0-i+self.xpos[c]],[y0-j+self.ypos[c]],sx,sy,rho)
 
-                    if is_neighbor == True:
+                    if is_neighbor:
                         # contribution from neighbor
                         val = target_val + (1/r)*PixelFlux(cx,cy,[self.A],[neighborcoords[0]-i+self.xpos[c]],[neighborcoords[1]-j+self.ypos[c]],sx,sy,rho)
                         self.fpix[c][i][j] = val
