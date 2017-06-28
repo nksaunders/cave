@@ -14,7 +14,7 @@ class MotionNoise(object):
 
         self.ID = 205998445
         self.startTime = datetime.now()
-        self.sK2 = simulateK2.Target(int(self.ID), 68000.0)
+        self.sK2 = simulateK2.Target(int(self.ID), 1150000.0)
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
