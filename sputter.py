@@ -53,7 +53,7 @@ class MotionNoise(object):
                 if i == 0:
                     self.flux_set.append(flux)
 
-            self.CDPP_set.append(np.mean(cdpp))
+            self.CDPP_set.append(np.mean(temp_CDPP_set))
 
     def CDPP(self, flux, mask = [], cadence = 'lc'):
         '''
