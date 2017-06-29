@@ -27,7 +27,8 @@ class MotionNoise(object):
         self.xpos = self.sK2.xpos
         self.ypos = self.sK2.ypos
 
-        dtrn, flux = self.aft.FirstOrderPLD(self.fpix)
+        self.fpix_crop = np.array([fp[1:6,1:6] for fp in self.fpix])
+        dtrn, flux = self.aft.FirstOrderPLD(self.fpix_crop)
         return flux
 
     def Create(self, f_n = 5):
