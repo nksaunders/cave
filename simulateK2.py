@@ -25,7 +25,7 @@ class Target(object):
         self.depth = depth
 
         # set aperture size (number of pixels to a side)
-        self.aps = 8
+        self.aps = 7
 
     def Transit(self):
         '''
