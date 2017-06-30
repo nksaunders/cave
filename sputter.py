@@ -9,16 +9,30 @@ from everest import detrender
 from everest.math import SavGol, Scatter, Downbin
 
 class MotionNoise(object):
+    '''
+    Simulates a star and transiting exoplanet
+    Creates light curves for various coefficients of the K2 motion vectors
+    Calculates CDPP and normalized CDPP for light curves
+    '''
 
     def __init__(self):
+        '''
+
+        '''
 
         self.ID = 205998445
         self.startTime = datetime.now()
+
+        # simulated a star, takes an ID and flux value (corresponding to magnitude)
         self.sK2 = simulateK2.Target(int(self.ID), 1150000.0)
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
     def SimulateStar(self, f):
+        '''
+        returns flux light curve
+        parameter int 'f': coefficient on motion vectors
+        '''
 
         # generate a simulated PSF
         self.fpix, self.target, self.ferr = self.sK2.GeneratePSF(motion_mag = f)
@@ -32,6 +46,10 @@ class MotionNoise(object):
         return flux
 
     def Create(self, f_n = 5):
+        '''
+        calculates CDPP for light curves for coefficients 'f' up to 'f_n'
+        parameter 'f_n': number of coefficients to test
+        '''
 
         self.fset = [(i+1) for i in range(f_n)]
 
@@ -63,7 +81,6 @@ class MotionNoise(object):
         :param array_like flux: The flux array to compute the CDPP for
         :param array_like mask: The indices to be masked
         :param str cadence: The light curve cadence. Default `lc`
-
         '''
 
         mask = np.where(self.trn < 1)
@@ -85,6 +102,10 @@ class MotionNoise(object):
             return np.nan
 
     def Plot(self):
+        '''
+        plot 1: light curves from each coefficient 'f'
+        plot 2: Normalized CDPP vs. coefficient 'f'
+        '''
 
         f_n = self.f_n
         fig, ax = pl.subplots(f_n,1, sharex=True)
