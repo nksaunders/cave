@@ -15,7 +15,7 @@ import os
 
 class Target(object):
 
-    def __init__(self, ID, amplitude, per = 15, dur = 0.5, depth = 0.01):
+    def __init__(self, ID, amplitude, per = 15, dur = 0.5, depth = 0.01, factor = 1800):
 
         # initialize variables
         self.A = amplitude
@@ -23,6 +23,7 @@ class Target(object):
         self.per = per
         self.dur = dur
         self.depth = depth
+        self.factor = factor
 
         # set aperture size (number of pixels to a side)
         self.aps = 7
@@ -67,8 +68,9 @@ class Target(object):
             if np.isnan(self.ypos[i]):
                 self.ypos[i] = 0
 
-        self.xpos = self.xpos[:1000] * motion_mag
-        self.ypos = self.ypos[:1000] * motion_mag
+        # import pdb; pdb.set_trace()
+        self.xpos = self.xpos[1000:2000] * motion_mag
+        self.ypos = self.ypos[1000:2000] * motion_mag
 
         # define intra-pixel sensitivity variation
         intra = np.zeros((self.aps,self.aps))
@@ -117,15 +119,15 @@ class Target(object):
 
 
                     # add photon noise
-                    self.ferr[c][i][j] = np.sqrt(self.fpix[c][i][j])
+                    self.ferr[c][i][j] = np.sqrt(self.fpix[c][i][j] / self.factor)
                     randnum = np.random.randn()
                     self.fpix[c][i][j] += self.ferr[c][i][j] * randnum
                     self.target[c][i][j] += self.ferr[c][i][j] * randnum
 
                     # add background noise
                     noise = np.sqrt(background_level) * np.random.randn()
-                    self.fpix[c][i][j] += background_level + noise
-                    self.target[c][i][j] += background_level + noise
+                    self.fpix[c][i][j] += noise
+                    self.target[c][i][j] += noise
 
             # multiply by intra-pixel variation
             self.fpix[c] *= intra
