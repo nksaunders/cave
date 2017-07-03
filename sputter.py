@@ -43,7 +43,7 @@ class MotionNoise(object):
 
         self.fpix_crop = np.array([fp[1:6,1:6] for fp in self.fpix])
         dtrn, flux = self.aft.FirstOrderPLD(self.fpix_crop)
-        import pdb; pdb.set_trace()
+
         return flux
 
     def Create(self, f_n = 5):
