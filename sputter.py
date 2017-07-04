@@ -24,7 +24,7 @@ class MotionNoise(object):
         self.startTime = datetime.now()
 
         # simulated a star, takes an ID and flux value (corresponding to magnitude)
-        self.sK2 = simulateK2.Target(int(self.ID), 1150000.0)
+        self.sK2 = simulateK2.Target(int(self.ID), 159000.0)
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
@@ -44,7 +44,10 @@ class MotionNoise(object):
         self.fpix_crop = np.array([fp[1:6,1:6] for fp in self.fpix])
         dtrn, flux = self.aft.FirstOrderPLD(self.fpix_crop)
 
-        return flux
+        fpix_rs = self.fpix.reshape(len(self.fpix),-1)
+        raw_flux = np.sum(fpix_rs,axis=1)
+
+        return raw_flux, flux
 
     def Create(self, f_n = 5):
         '''
@@ -60,14 +63,16 @@ class MotionNoise(object):
 
         print("Testing Motion Magnitudes...")
 
-        f1 = self.SimulateStar(0)
+        import pdb; pdb.set_trace()
+
+        rf1, f1 = self.SimulateStar(0)
         self.true_cdpp = self.CDPP(f1)
 
         for f in tqdm(self.fset):
             temp_CDPP_set = []
 
             for i in tqdm(range(5)):
-                flux = self.SimulateStar(f)
+                raw_flux, flux = self.SimulateStar(f)
                 cdpp = self.CDPP(flux)
                 temp_CDPP_set.append(cdpp)
                 if i == 0:
