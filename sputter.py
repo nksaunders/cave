@@ -38,14 +38,17 @@ class MotionNoise(object):
         self.fpix, self.target, self.ferr = self.sK2.GeneratePSF(motion_mag = f)
         self.t = np.linspace(0,90,len(self.fpix))
 
+        fpix_rs = self.fpix.reshape(len(self.fpix),-1)
+        raw_flux = np.sum(fpix_rs,axis=1)
+
+        self.maskvals = np.where(raw_flux < (np.nanmean(raw_flux)*.99))
+        self.M = lambda x: np.delete(x, self.maskvals, axis = 0)
+
         self.xpos = self.sK2.xpos
         self.ypos = self.sK2.ypos
 
         self.fpix_crop = np.array([fp[1:6,1:6] for fp in self.fpix])
-        dtrn, flux = self.aft.FirstOrderPLD(self.fpix_crop)
-
-        fpix_rs = self.fpix.reshape(len(self.fpix),-1)
-        raw_flux = np.sum(fpix_rs,axis=1)
+        dtrn, flux = self.aft.FirstOrderPLD(self.M(self.fpix_crop))
 
         return raw_flux, flux
 
@@ -62,8 +65,6 @@ class MotionNoise(object):
         self.f_n = f_n
 
         print("Testing Motion Magnitudes...")
-
-        import pdb; pdb.set_trace()
 
         rf1, f1 = self.SimulateStar(0)
         self.true_cdpp = self.CDPP(f1)
@@ -117,7 +118,7 @@ class MotionNoise(object):
         fig, ax = pl.subplots(f_n,1, sharex=True)
 
         for f in range(f_n):
-            ax[f].plot(self.t,self.flux_set[f],'k.')
+            ax[f].plot(self.M(self.t),self.flux_set[f],'k.')
             ax[f].set_title("f = %.1f" % (f+1))
             ax[f].set_ylabel("Flux (counts)")
             ax[f].annotate(r'$\mathrm{Mean\ CDPP}: %.2f$' % (self.CDPP_set[f]),
