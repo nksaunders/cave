@@ -30,7 +30,7 @@ class MotionNoise(object):
 
     def SimulateStar(self, f):
         '''
-        returns flux light curve
+        returns raw flux and detrended flux light curves
         parameter int 'f': coefficient on motion vectors
         '''
 
@@ -38,16 +38,23 @@ class MotionNoise(object):
         self.fpix, self.target, self.ferr = self.sK2.GeneratePSF(motion_mag = f)
         self.t = np.linspace(0,90,len(self.fpix))
 
+        # raw flux light curve
         fpix_rs = self.fpix.reshape(len(self.fpix),-1)
         raw_flux = np.sum(fpix_rs,axis=1)
 
-        self.maskvals = np.where(raw_flux < (np.nanmean(raw_flux)*.99))
+        # mask outliers due to flux loss off aperture
+        self.trnvals = np.where(self.trn < 1)
+        # self.trnM = lambda x: np.delete(x, self.trnvals, axis = 0)
+        self.maskvals = np.where((raw_flux < (np.nanmean(raw_flux)*.99)) & (self.trn == 1))
         self.M = lambda x: np.delete(x, self.maskvals, axis = 0)
 
+        raw_flux = self.M(raw_flux)
+        # motion vectors
         self.xpos = self.sK2.xpos
         self.ypos = self.sK2.ypos
 
-        self.fpix_crop = np.array([fp[1:6,1:6] for fp in self.fpix])
+        # reduce aperture size to 5x5, run first order PLD
+        self.fpix_crop = np.array([fp[3:8,3:8] for fp in self.fpix])
         dtrn, flux = self.aft.FirstOrderPLD(self.M(self.fpix_crop))
 
         return raw_flux, flux
@@ -66,13 +73,16 @@ class MotionNoise(object):
 
         print("Testing Motion Magnitudes...")
 
+        # calculate no-motion case
         rf1, f1 = self.SimulateStar(0)
         self.true_cdpp = self.CDPP(f1)
 
+        # iterate through 'f' values
         for f in tqdm(self.fset):
             temp_CDPP_set = []
 
-            for i in tqdm(range(5)):
+            # take mean of 5 runs
+            for i in tqdm(range(1)):
                 raw_flux, flux = self.SimulateStar(f)
                 cdpp = self.CDPP(flux)
                 temp_CDPP_set.append(cdpp)
@@ -90,7 +100,7 @@ class MotionNoise(object):
         :param str cadence: The light curve cadence. Default `lc`
         '''
 
-        mask = np.where(self.trn < 1)
+        mask = self.trnvals
 
         # 13 cadences is 6.5 hours
         rmswin = 13
@@ -117,8 +127,11 @@ class MotionNoise(object):
         f_n = self.f_n
         fig, ax = pl.subplots(f_n,1, sharex=True)
 
+        import pdb; pdb.set_trace()
+
+        # plot light curve for each coefficient of 'f'
         for f in range(f_n):
-            ax[f].plot(self.M(self.t),self.flux_set[f],'k.')
+            ax[f].plot(self.flux_set[f],'k.')
             ax[f].set_title("f = %.1f" % (f+1))
             ax[f].set_ylabel("Flux (counts)")
             ax[f].annotate(r'$\mathrm{Mean\ CDPP}: %.2f$' % (self.CDPP_set[f]),
