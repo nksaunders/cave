@@ -26,7 +26,7 @@ class Target(object):
         self.factor = factor
 
         # set aperture size (number of pixels to a side)
-        self.aps = 7
+        self.aps = 11
 
     def Transit(self):
         '''
@@ -88,8 +88,8 @@ class Target(object):
         cy = [1.0,0.0,-0.2]
         x0 = self.aps / 2.0
         y0 = self.aps / 2.0
-        sx = [0.7]
-        sy = [0.4]
+        sx = [0.5]
+        sy = [0.5]
         rho = [0.05]
         neighborcoords = [4.,4.]
 
