@@ -45,7 +45,7 @@ class MotionNoise(object):
         # mask outliers due to flux loss off aperture
         self.trnvals = np.where(self.trn < 1)
         self.trnM = lambda x: np.delete(x, self.trnvals, axis = 0)
-        self.maskvals = np.where((np.abs(raw_flux - (np.nanmean(raw_flux)) > (np.nanmean(raw_flux)*0.005))) & (self.trn == 1))
+        self.maskvals = np.where((np.abs(raw_flux - (np.nanmean(raw_flux)) > (np.nanmean(raw_flux)*0.001))) & (self.trn == 1))
         self.M = lambda x: np.delete(x, self.maskvals, axis = 0)
 
         raw_flux = self.M(raw_flux)
@@ -54,7 +54,7 @@ class MotionNoise(object):
         self.ypos = self.sK2.ypos
 
         # reduce aperture size to 5x5, run first order PLD
-        self.fpix_crop = np.array([fp[3:8,3:8] for fp in self.fpix])
+        self.fpix_crop = np.array([fp[2:7,2:7] for fp in self.fpix])
         dtrn, flux = self.aft.FirstOrderPLD(self.M(self.fpix_crop))
 
         return raw_flux, dtrn
@@ -125,7 +125,7 @@ class MotionNoise(object):
         '''
 
         f_n = self.f_n
-        fig, ax = pl.subplots(f_n,1, sharex=True)
+        fig, ax = pl.subplots(f_n,1, sharex=True, sharey=True)
 
         # plot light curve for each coefficient of 'f'
         for f in range(f_n):
