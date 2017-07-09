@@ -60,8 +60,22 @@ class ApertureFit(object):
         flux = np.sum(fpix_rs,axis=1)
 
         # mask transits
-        X = fpix_rs / flux.reshape(-1,1)
-        MX = self.M(fpix_rs) / self.M(flux).reshape(-1,1)
+        fpix_norm = fpix_rs / flux.reshape(-1,1)
+        X = np.zeros((len(fpix_norm),(len(fpix_norm[0])+1)))
+
+        for n,f in enumerate(fpix_norm):
+            row = np.insert(f, 0, 1.)
+            X[n] = row
+
+        Mfpix_norm = self.M(fpix_rs) / self.M(flux).reshape(-1,1)
+        MX = np.zeros((len(Mfpix_norm),(len(Mfpix_norm[0])+1)))
+
+        for n,f in enumerate(Mfpix_norm):
+            row = np.insert(f, 0, 1.)
+            MX[n] = row
+
+        # X = np.array(X)
+        # MX = np.array(MX)
 
         # perform first order PLD
         A = np.dot(MX.T, MX)
