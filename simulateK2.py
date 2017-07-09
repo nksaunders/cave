@@ -26,7 +26,7 @@ class Target(object):
         self.factor = factor
 
         # set aperture size (number of pixels to a side)
-        self.aps = 11
+        self.aps = 9
 
     def Transit(self):
         '''
