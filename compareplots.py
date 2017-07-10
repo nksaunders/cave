@@ -63,10 +63,9 @@ m14cdppn = [1.0591455207326483, 1.0671502693806201, 1.1265159019363886, 1.446735
 nmv14 = m14cdpp[0] / m14cdppn[0]
 m14cdppnn = [(val - nmv14)/nmv14 for val in m14cdpp]
 
-# (M - NM) / NM
-
 '''
 Plots
+'''
 '''
 fig1 = pl.figure()
 pl.plot(x,m10cdpp,'m', label=r'$\mathrm{K_p\ Mag=10}$')
@@ -91,5 +90,21 @@ pl.xlabel("Motion (pixels)")
 pl.ylabel("Normalized CDPP")
 legend = pl.legend(loc=0)
 pl.xlim([x[0],x[4]])
+'''
+fig3 = pl.figure()
 
+kpmag = [10,11,12,13,14]
+cdpp1 = [305.37041996985982,316.48391252675253,400.39028552487798,703.43444909798257,1554.0554322694647]
+cdpp2 = [448.8096755227449,457.56983749901366,522.75941191344168,761.10804525966955,1565.8005823709609]
+cdpp3 = [578.98913751867622,589.49956228273766,649.40612575633907,870.79808941020997,1652.9061613093368]
+cdpp4 = [1226.1147928904552,1226.4531372882252,1256.8192232039614,1429.7348560989381,2122.7557909346106]
+cdpp5 = [5199.101732203816,5202.9209980057394,5228.2881766126384,5232.5492997124875,5373.3495374920767]
+pl.plot(kpmag,cdpp1,'m', label=r'$\mathrm{Motion\ Coefficient=1}$')
+pl.plot(kpmag,cdpp2,'k', label=r'$\mathrm{Motion\ Coefficient=2}$')
+pl.plot(kpmag,cdpp3,'r', label=r'$\mathrm{Motion\ Coefficient=3}$')
+pl.plot(kpmag,cdpp4,'b', label=r'$\mathrm{Motion\ Coefficient=4}$')
+pl.plot(kpmag,cdpp5,'g', label=r'$\mathrm{Motion\ Coefficient=5}$')
+pl.xlabel('Kp Mag')
+pl.ylabel('CDPP')
+legend = pl.legend(loc=0)
 pl.show()
