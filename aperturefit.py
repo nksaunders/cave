@@ -12,6 +12,7 @@ import k2plr
 from k2plr.config import KPLR_ROOT
 from everest.config import KEPPRF_DIR
 import os
+from sklearn.decomposition import PCA
 
 class ApertureFit(object):
 
@@ -60,31 +61,36 @@ class ApertureFit(object):
         flux = np.sum(fpix_rs,axis=1)
 
         # mask transits
-        fpix_norm = fpix_rs / flux.reshape(-1,1)
-        X = np.zeros((len(fpix_norm),(len(fpix_norm[0])+1)))
+        X = fpix_rs / flux.reshape(-1,1)
+        MX = self.M(fpix_rs) / self.M(flux).reshape(-1,1)
 
-        for n,f in enumerate(fpix_norm):
-            row = np.insert(f, 0, 1.)
-            X[n] = row
+        # mask NaN indices
+        naninds = np.where(np.isnan(X))[0]
+        Mnaninds = np.where(np.isnan(MX))[0]
+        nanmask = lambda x: np.delete(x, naninds, axis=0)
+        Mnanmask = lambda x: np.delete(x, Mnaninds, axis=0)
 
-        Mfpix_norm = self.M(fpix_rs) / self.M(flux).reshape(-1,1)
-        MX = np.zeros((len(Mfpix_norm),(len(Mfpix_norm[0])+1)))
+        import pdb; pdb.set_trace()
+        X = nanmask(X)
+        MX = Mnanmask(MX)
 
-        for n,f in enumerate(Mfpix_norm):
-            row = np.insert(f, 0, 1.)
-            MX[n] = row
+        # perform principle component analysis to reduce number of regressors
+        pca = PCA(n_components = 30)
+        xpca = pca.fit_transform(X)
+        X = np.hstack([np.ones(xpca.shape[0]).reshape(-1, 1), xpca])
 
-        # X = np.array(X)
-        # MX = np.array(MX)
+        mxpca = pca.fit_transform(MX)
+        MX = np.hstack([np.ones(mxpca.shape[0]).reshape(-1,1), mxpca])
 
         # perform first order PLD
         A = np.dot(MX.T, MX)
-        B = np.dot(MX.T, self.M(flux))
+        B = np.dot(MX.T, Mnanmask(self.M(flux)))
         C = np.linalg.solve(A, B)
 
         # compute detrended light curve
-        model = np.dot(X, C)
-        detrended = flux - model + np.nanmean(flux)
+        model = np.dot(Mnanmask(X), C)
+
+        detrended = Mnanmask(flux) - model + np.nanmean(flux)
 
         # folded
         # D = (detrended - np.dot(C[1:], X[:,1:].T) + np.nanmedian(detrended)) / np.nanmedian(detrended)
