@@ -55,7 +55,9 @@ class MotionNoise(object):
 
         # reduce aperture size to 5x5, run first order PLD
         self.fpix_crop = np.array([fp[2:7,2:7] for fp in self.fpix])
-        dtrn, flux = self.aft.FirstOrderPLD(self.fpix_crop)
+        # dtrn, flux = self.aft.FirstOrderPLD(self.fpix_crop)
+
+        dtrn, flux = self.aft.FirstOrderPLD(self.fpix)
 
         return raw_flux, dtrn
 
@@ -153,5 +155,6 @@ class MotionNoise(object):
         import pdb; pdb.set_trace()
 
 MN = MotionNoise()
+MN.SimulateStar(3)
 MN.Create()
 MN.Plot()
