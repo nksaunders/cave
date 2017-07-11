@@ -13,6 +13,7 @@ from k2plr.config import KPLR_ROOT
 from everest.config import KEPPRF_DIR
 import os
 from sklearn.decomposition import PCA
+from itertools import combinations_with_replacement as multichoose
 
 class ApertureFit(object):
 
@@ -56,41 +57,66 @@ class ApertureFit(object):
         Returns: detrended light curve, raw light curve
         '''
 
+        # hack
+        naninds = np.where(np.isnan(fpix))
+        fpix[naninds] = 0
+
         #  generate flux light curve
         fpix_rs = fpix.reshape(len(fpix),-1)
         flux = np.sum(fpix_rs,axis=1)
 
         # mask transits
-        X = fpix_rs / flux.reshape(-1,1)
-        MX = self.M(fpix_rs) / self.M(flux).reshape(-1,1)
+        #X = fpix_rs / flux.reshape(-1,1)
+        #MX = self.M(fpix_rs) / self.M(flux).reshape(-1,1)
 
         # mask NaN indices
-        naninds = np.where(np.isnan(X))[0]
-        Mnaninds = np.where(np.isnan(MX))[0]
-        nanmask = lambda x: np.delete(x, naninds, axis=0)
-        Mnanmask = lambda x: np.delete(x, Mnaninds, axis=0)
+        #naninds = np.where(np.isnan(X))[0]
+        #Mnaninds = np.where(np.isnan(MX))[0]
+        #nanmask = lambda x: np.delete(x, naninds, axis=0)
+        #Mnanmask = lambda x: np.delete(x, Mnaninds, axis=0)
 
-        import pdb; pdb.set_trace()
-        X = nanmask(X)
-        MX = Mnanmask(MX)
+        #X = nanmask(X)
+        #MX = Mnanmask(MX)
 
         # perform principle component analysis to reduce number of regressors
+
+        '''
         pca = PCA(n_components = 30)
+        #X = fpix_rs / flux.reshape(-1,1)
+        pld_order = 2
+        f = fpix_rs / flux.reshape(-1,1)
+        X = np.empty(shape = (f.shape[0], 0), dtype = 'float64')
+        for n in range(1, pld_order + 1):
+            xn = np.product(list(multichoose(f.T, n)), axis = 1).T
+            X = np.hstack([X, xn])
         xpca = pca.fit_transform(X)
         X = np.hstack([np.ones(xpca.shape[0]).reshape(-1, 1), xpca])
+        '''
 
-        mxpca = pca.fit_transform(MX)
-        MX = np.hstack([np.ones(mxpca.shape[0]).reshape(-1,1), mxpca])
+        # First order PLD
+        f1 = fpix_rs / flux.reshape(-1,1)
+        pca = PCA(n_components = 20)
+        X1 = pca.fit_transform(f1)
+
+        # Second order PLD
+        f2 = np.product(list(multichoose(f1.T, 2)), axis = 1).T
+        pca = PCA(n_components = 10)
+        X2 = pca.fit_transform(f2)
+
+        # Combine them and add a column vector of 1s for stability
+        X = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2])
+
+        MX = self.M(X)
 
         # perform first order PLD
         A = np.dot(MX.T, MX)
-        B = np.dot(MX.T, Mnanmask(self.M(flux)))
+        B = np.dot(MX.T, self.M(flux))
         C = np.linalg.solve(A, B)
 
         # compute detrended light curve
-        model = np.dot(Mnanmask(X), C)
+        model = np.dot(X, C)
 
-        detrended = Mnanmask(flux) - model + np.nanmean(flux)
+        detrended = flux - model + np.nanmean(flux)
 
         # folded
         # D = (detrended - np.dot(C[1:], X[:,1:].T) + np.nanmedian(detrended)) / np.nanmedian(detrended)
