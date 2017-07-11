@@ -119,6 +119,8 @@ class Target(object):
 
 
                     # add photon noise
+                    if self.fpix[c][i][j] < 0:
+                        self.fpix[c][i][j] = 0
                     self.ferr[c][i][j] = np.sqrt(self.fpix[c][i][j] / self.factor)
                     randnum = np.random.randn()
                     self.fpix[c][i][j] += self.ferr[c][i][j] * randnum
