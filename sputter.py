@@ -24,7 +24,7 @@ class MotionNoise(object):
         self.startTime = datetime.now()
 
         # simulated a star, takes an ID and flux value (corresponding to magnitude)
-        self.sK2 = simulateK2.Target(int(self.ID), 159000.0)
+        self.sK2 = simulateK2.Target(int(self.ID), 454000.0)
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
@@ -138,7 +138,7 @@ class MotionNoise(object):
                             xy = (0.85, 0.05),xycoords='axes fraction',
                             color='k', fontsize=12);
 
-        ax[f_n-1].set_xlabel("Time (days)")
+        ax[f_n-1].set_xlabel("Time (cadences)")
 
         fig2 = pl.figure()
 
@@ -155,6 +155,10 @@ class MotionNoise(object):
         import pdb; pdb.set_trace()
 
 MN = MotionNoise()
-MN.SimulateStar(3)
+'''
+rf, detrended = MN.SimulateStar(3)
+print('done')
+import pdb; pdb.set_trace()
+'''
 MN.Create()
 MN.Plot()
