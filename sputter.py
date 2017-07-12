@@ -24,7 +24,7 @@ class MotionNoise(object):
         self.startTime = datetime.now()
 
         # simulated a star, takes an ID and flux value (corresponding to magnitude)
-        self.sK2 = simulateK2.Target(int(self.ID), 454000.0)
+        self.sK2 = simulateK2.Target(int(self.ID), 28000.0)
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
@@ -67,7 +67,7 @@ class MotionNoise(object):
         parameter 'f_n': number of coefficients to test
         '''
 
-        self.fset = [(i+1) for i in range(f_n)]
+        self.fset = [(i+6) for i in range(f_n)]
 
         self.flux_set = []
         self.CDPP_set = []
@@ -84,14 +84,15 @@ class MotionNoise(object):
             temp_CDPP_set = []
 
             # take mean of 5 runs
-            for i in tqdm(range(1)):
+            for i in tqdm(range(5)):
                 raw_flux, flux = self.SimulateStar(f)
                 cdpp = self.CDPP(flux)
                 temp_CDPP_set.append(cdpp)
                 if i == 0:
                     self.flux_set.append(flux)
 
-            self.CDPP_set.append(np.mean(temp_CDPP_set))
+            cdppval = np.mean(temp_CDPP_set)
+            self.CDPP_set.append(cdppval)
 
     def CDPP(self, flux, mask = [], cadence = 'lc'):
         '''
