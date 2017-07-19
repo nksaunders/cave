@@ -24,7 +24,7 @@ class MotionNoise(object):
         self.startTime = datetime.now()
 
         # simulated a star, takes an ID and flux value (corresponding to magnitude)
-        self.sK2 = simulateK2.Target(int(self.ID), 28000.0)
+        self.sK2 = simulateK2.Target(int(self.ID), 159000.0)
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
@@ -67,7 +67,7 @@ class MotionNoise(object):
         parameter 'f_n': number of coefficients to test
         '''
 
-        self.fset = [(i+6) for i in range(f_n)]
+        self.fset = [(i+11) for i in range(f_n)]
 
         self.flux_set = []
         self.CDPP_set = []
