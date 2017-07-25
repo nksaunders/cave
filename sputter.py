@@ -15,7 +15,7 @@ class MotionNoise(object):
     Calculates CDPP and normalized CDPP for light curves
     '''
 
-    def __init__(self):
+    def __init__(self, f_mag):
         '''
 
         '''
@@ -24,7 +24,7 @@ class MotionNoise(object):
         self.startTime = datetime.now()
 
         # simulated a star, takes an ID and flux value (corresponding to magnitude)
-        self.sK2 = simulateK2.Target(int(self.ID), 159000.0)
+        self.sK2 = simulateK2.Target(int(self.ID), f_mag)
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
@@ -67,7 +67,7 @@ class MotionNoise(object):
         parameter 'f_n': number of coefficients to test
         '''
 
-        self.fset = [(i+11) for i in range(f_n)]
+        self.fset = [(i+16) for i in range(f_n)]
 
         self.flux_set = []
         self.CDPP_set = []
@@ -155,7 +155,7 @@ class MotionNoise(object):
         pl.show()
         import pdb; pdb.set_trace()
 
-MN = MotionNoise()
+MN = MotionNoise(28000.0)
 '''
 rf, detrended = MN.SimulateStar(3)
 print('done')
