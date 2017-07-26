@@ -7,6 +7,7 @@ from datetime import datetime
 from tqdm import tqdm
 from everest import detrender
 from everest.math import SavGol, Scatter, Downbin
+from astropy.stats import median_absolute_deviation as mad
 
 class MotionNoise(object):
     '''
@@ -15,7 +16,7 @@ class MotionNoise(object):
     Calculates CDPP and normalized CDPP for light curves
     '''
 
-    def __init__(self, f_mag):
+    def __init__(self):
         '''
 
         '''
@@ -24,50 +25,42 @@ class MotionNoise(object):
         self.startTime = datetime.now()
 
         # simulated a star, takes an ID and flux value (corresponding to magnitude)
-        self.sK2 = simulateK2.Target(int(self.ID), f_mag)
+        self.sK2 = simulateK2.Target(int(self.ID))
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
-    def SimulateStar(self, f):
-        '''
-        returns raw flux and detrended flux light curves
-        parameter int 'f': coefficient on motion vectors
-        '''
+    def DetrendFpix(self, mag, motion):
 
-        # generate a simulated PSF
-        self.fpix, self.target, self.ferr = self.sK2.GeneratePSF(motion_mag = f)
-        self.t = np.linspace(0,90,len(self.fpix))
 
-        # raw flux light curve
-        fpix_rs = self.fpix.reshape(len(self.fpix),-1)
-        raw_flux = np.sum(fpix_rs,axis=1)
+        path = 'stars/mag' + str(mag) + 'motion' + str(motion) + '.npz'
+        fpix = np.load(path)['fpix']
 
-        # mask outliers due to flux loss off aperture
-        self.trnvals = np.where(self.trn < 1)
-        self.trnM = lambda x: np.delete(x, self.trnvals, axis = 0)
-        self.maskvals = np.where((np.abs(raw_flux - (np.nanmean(raw_flux)) > (np.nanmean(raw_flux)*0.001))) & (self.trn == 1))
-        self.M = lambda x: np.delete(x, self.maskvals, axis = 0)
+        fpix_rs = fpix.reshape(len(fpix),-1)
+        tempflux = np.sum(fpix_rs,axis=1)
 
-        # raw_flux = self.M(raw_flux)
-        # motion vectors
-        self.xpos = self.sK2.xpos
-        self.ypos = self.sK2.ypos
+        crop = np.where(tempflux < (0.99*np.mean(tempflux)))[0]
+        M = lambda x: np.delete(x, crop, axis=0)
+        fpix = M(fpix)
 
-        # reduce aperture size to 5x5, run first order PLD
-        self.fpix_crop = np.array([fp[2:7,2:7] for fp in self.fpix])
-        # dtrn, flux = self.aft.FirstOrderPLD(self.fpix_crop)
+        x0, y0 = self.sK2.CenterOfFlux(fpix)
+        crop2 = []
+        for n in range(len(fpix)):
+            if (np.sqrt((x0[n]-15/2)**2+(y0[n]-15/2)**2) > 6.5):
+                crop2.append(n)
 
-        dtrn, flux = self.aft.FirstOrderPLD(self.fpix)
+        M2 = lambda x: np.delete(x, crop2, axis=0)
+        fpix = M2(fpix)
+        flux, rawflux = self.aft.PLD(fpix)
 
-        return raw_flux, dtrn
+        return flux, rawflux
 
-    def Create(self, f_n = 5):
+    def Create(self, mag, f_n = 20):
         '''
         calculates CDPP for light curves for coefficients 'f' up to 'f_n'
         parameter 'f_n': number of coefficients to test
         '''
 
-        self.fset = [(i+16) for i in range(f_n)]
+        self.fset = [(i+1) for i in range(f_n)]
 
         self.flux_set = []
         self.CDPP_set = []
@@ -76,16 +69,17 @@ class MotionNoise(object):
         print("Testing Motion Magnitudes...")
 
         # calculate no-motion case
-        rf1, f1 = self.SimulateStar(0)
+        f1, rf1 = self.DetrendFpix(mag, 0)
         self.true_cdpp = self.CDPP(f1)
 
         # iterate through 'f' values
         for f in tqdm(self.fset):
             temp_CDPP_set = []
 
+
             # take mean of 5 runs
             for i in tqdm(range(5)):
-                raw_flux, flux = self.SimulateStar(f)
+                flux, rawflux = self.DetrendFpix(mag, f)
                 cdpp = self.CDPP(flux)
                 temp_CDPP_set.append(cdpp)
                 if i == 0:
@@ -93,6 +87,7 @@ class MotionNoise(object):
 
             cdppval = np.mean(temp_CDPP_set)
             self.CDPP_set.append(cdppval)
+
 
     def CDPP(self, flux, mask = [], cadence = 'lc'):
         '''
@@ -103,6 +98,7 @@ class MotionNoise(object):
         :param str cadence: The light curve cadence. Default `lc`
         '''
 
+        self.trnvals = np.where(self.trn < 1.0)
         mask = self.trnvals
 
         # 13 cadences is 6.5 hours
@@ -153,13 +149,7 @@ class MotionNoise(object):
         pl.ylabel("Normalized CDPP")
         pl.title("Normalized CDPP vs. Motion Magnitude")
         pl.show()
-        import pdb; pdb.set_trace()
 
-MN = MotionNoise(28000.0)
-'''
-rf, detrended = MN.SimulateStar(3)
-print('done')
-import pdb; pdb.set_trace()
-'''
-MN.Create()
+MN = MotionNoise()
+MN.Create(14)
 MN.Plot()
