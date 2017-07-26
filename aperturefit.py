@@ -51,7 +51,7 @@ class ApertureFit(object):
 
         return self.c_det, self.c_pix
 
-    def FirstOrderPLD(self,fpix):
+    def PLD(self,fpix):
         '''
         Perform first order PLD on a light curve
         Returns: detrended light curve, raw light curve
@@ -64,34 +64,6 @@ class ApertureFit(object):
         #  generate flux light curve
         fpix_rs = fpix.reshape(len(fpix),-1)
         flux = np.sum(fpix_rs,axis=1)
-
-        # mask transits
-        #X = fpix_rs / flux.reshape(-1,1)
-        #MX = self.M(fpix_rs) / self.M(flux).reshape(-1,1)
-
-        # mask NaN indices
-        #naninds = np.where(np.isnan(X))[0]
-        #Mnaninds = np.where(np.isnan(MX))[0]
-        #nanmask = lambda x: np.delete(x, naninds, axis=0)
-        #Mnanmask = lambda x: np.delete(x, Mnaninds, axis=0)
-
-        #X = nanmask(X)
-        #MX = Mnanmask(MX)
-
-        # perform principle component analysis to reduce number of regressors
-
-        '''
-        pca = PCA(n_components = 30)
-        #X = fpix_rs / flux.reshape(-1,1)
-        pld_order = 2
-        f = fpix_rs / flux.reshape(-1,1)
-        X = np.empty(shape = (f.shape[0], 0), dtype = 'float64')
-        for n in range(1, pld_order + 1):
-            xn = np.product(list(multichoose(f.T, n)), axis = 1).T
-            X = np.hstack([X, xn])
-        xpca = pca.fit_transform(X)
-        X = np.hstack([np.ones(xpca.shape[0]).reshape(-1, 1), xpca])
-        '''
 
         # First order PLD
         f1 = fpix_rs / flux.reshape(-1,1)
@@ -108,7 +80,6 @@ class ApertureFit(object):
 
         MX = self.M(X)
 
-        # perform first order PLD
         A = np.dot(MX.T, MX)
         B = np.dot(MX.T, self.M(flux))
         C = np.linalg.solve(A, B)
