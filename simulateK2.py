@@ -15,10 +15,9 @@ import os
 
 class Target(object):
 
-    def __init__(self, ID, amplitude, per = 15, dur = 0.5, depth = 0.01, factor = 1800):
+    def __init__(self, ID, per = 15, dur = 0.5, depth = 0.01, factor = 1800):
 
         # initialize variables
-        self.A = amplitude
         self.ID = ID
         self.per = per
         self.dur = dur
@@ -41,12 +40,14 @@ class Target(object):
 
         return self.trn
 
-    def GeneratePSF(self, motion_mag = 1.0):
+    def GeneratePSF(self, f_mag, motion_mag = 1.0):
         '''
         Generate a PSF model that includes modeled inter-pixel sensitivity variation.
         Model includes photon noise and background nosie.
         Returns: fpix and ferr
         '''
+
+        self.A = f_mag
 
         # read in relevant data
         ID = 205998445
