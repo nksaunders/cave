@@ -84,7 +84,7 @@ class Target(object):
         self.M = lambda x: np.delete(x, self.naninds, axis = 0)
 
         # generate PRF model with inter-pixel sensitivity variation
-
+        import pdb; pdb.set_trace()
         cx = [1.0,0.0,-0.2]
         cy = [1.0,0.0,-0.2]
         x0 = self.aps / 2.0
