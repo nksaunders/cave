@@ -67,17 +67,16 @@ class ApertureFit(object):
 
         # First order PLD
         f1 = fpix_rs / flux.reshape(-1,1)
-        pca = PCA(n_components = 20)
+        pca = PCA(n_components = 30)
         X1 = pca.fit_transform(f1)
 
         # Second order PLD
         f2 = np.product(list(multichoose(f1.T, 2)), axis = 1).T
-        pca = PCA(n_components = 10)
+        pca = PCA(n_components = 20)
         X2 = pca.fit_transform(f2)
 
         # Combine them and add a column vector of 1s for stability
         X = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2])
-
         MX = self.M(X)
 
         A = np.dot(MX.T, MX)
