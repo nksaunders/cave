@@ -54,13 +54,13 @@ class MotionNoise(object):
 
         return flux, rawflux
 
-    def Create(self, mag, f_n = 20):
+    def Create(self, mag, f_n = 4):
         '''
         calculates CDPP for light curves for coefficients 'f' up to 'f_n'
         parameter 'f_n': number of coefficients to test
         '''
 
-        self.fset = [(i+1) for i in range(f_n)]
+        self.fset = [(i+21) for i in range(f_n)]
 
         self.flux_set = []
         self.CDPP_set = []
@@ -78,7 +78,7 @@ class MotionNoise(object):
 
 
             # take mean of 5 runs
-            for i in tqdm(range(5)):
+            for i in range(5):
                 flux, rawflux = self.DetrendFpix(mag, f)
                 cdpp = self.CDPP(flux)
                 temp_CDPP_set.append(cdpp)
