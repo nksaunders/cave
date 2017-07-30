@@ -13,5 +13,5 @@ def Simulate(ID, f_mag, m_mag):
     return fpix
 
 for i in tqdm(range(21)):
-    fpix = Simulate(205998445, 28000.0, i)
-    np.savez(('stars/mag14motion%.i'%i),fpix=fpix)
+    fpix = Simulate(205998445, 1150000.0, i)
+    np.savez(('stars/neighbor_mag10motion%.i'%i),fpix=fpix)
