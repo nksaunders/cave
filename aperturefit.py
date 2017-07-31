@@ -51,7 +51,7 @@ class ApertureFit(object):
 
         return self.c_det, self.c_pix
 
-    def PLD(self,fpix):
+    def PLD(self,fpix,motion):
         '''
         Perform first order PLD on a light curve
         Returns: detrended light curve, raw light curve
@@ -75,8 +75,16 @@ class ApertureFit(object):
         pca = PCA(n_components = 20)
         X2 = pca.fit_transform(f2)
 
+        X10 = np.load('masks/X10_%i.npz'%motion)['X']
+        X10crop = []
+        for i in range(len(X10)):
+            X10crop.append(X10[i][1:])
+
         # Combine them and add a column vector of 1s for stability
-        X = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2])
+        X3 = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2])
+
+        X = np.concatenate((X3,X10crop),axis=1)
+        # np.savez(('masks/X10_%i'%motion),X=X)
         MX = self.M(X)
 
         A = np.dot(MX.T, MX)
