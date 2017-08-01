@@ -46,9 +46,8 @@ class MotionNoise(object):
             if (np.sqrt((x0[n]-15/2)**2+(y0[n]-15/2)**2) > 6.5):
                 crop2.append(n)
 
-        cropvals = np.unique(np.concatenate((crop,crop2),axis=0))
-
-        mask10 = np.load('masks/neighbor_mask%i_%i.npz'%(mag,motion))['cropvals']
+        mask10 = np.load('masks/neighbor_mask10_%i.npz'%motion)['cropvals']
+        cropvals = np.unique(np.concatenate((crop,crop2,mask10),axis=0))
         M = lambda x: np.delete(x, mask10, axis=0)
         # np.savez(('masks/neighbor_mask%i_%i'%(mag,motion)),cropvals=cropvals)
 
@@ -57,13 +56,13 @@ class MotionNoise(object):
 
         return flux, rawflux
 
-    def Create(self, mag, f_n = 21):
+    def Create(self, mag, f_n = 20):
         '''
         calculates CDPP for light curves for coefficients 'f' up to 'f_n'
         parameter 'f_n': number of coefficients to test
         '''
 
-        self.fset = [(i) for i in range(f_n)]
+        self.fset = [(i+1) for i in range(f_n)]
 
         self.flux_set = []
         self.CDPP_set = []
@@ -81,7 +80,7 @@ class MotionNoise(object):
 
 
             # take mean of 5 runs
-            for i in range(1):
+            for i in range(5):
                 flux, rawflux = self.DetrendFpix(mag, f)
                 cdpp = self.CDPP(flux)
                 temp_CDPP_set.append(cdpp)
@@ -154,5 +153,5 @@ class MotionNoise(object):
         pl.show()
 
 MN = MotionNoise()
-MN.Create(10)
+MN.Create(11)
 MN.Plot()
