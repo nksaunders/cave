@@ -32,7 +32,7 @@ class MotionNoise(object):
     def DetrendFpix(self, mag, motion):
 
 
-        path = 'stars/mag' + str(mag) + 'motion' + str(motion) + '.npz'
+        path = 'stars/larger_aperture/mag' + str(mag) + 'motion' + str(motion) + '.npz'
         fpix = np.load(path)['fpix']
 
         fpix_rs = fpix.reshape(len(fpix),-1)
@@ -43,16 +43,16 @@ class MotionNoise(object):
         x0, y0 = self.sK2.CenterOfFlux(fpix)
         crop2 = []
         for n in range(len(fpix)):
-            if (np.sqrt((x0[n]-15/2)**2+(y0[n]-15/2)**2) > 6.5):
+            if (np.sqrt((x0[n]-19/2)**2+(y0[n]-19/2)**2) > 8.5):
                 crop2.append(n)
 
-        mask10 = np.load('masks/neighbor_mask10_%i.npz'%motion)['cropvals']
-        cropvals = np.unique(np.concatenate((crop,crop2,mask10),axis=0))
+        mask10 = np.load('masks/larger_aperture/neighbor_mask10_%i.npz'%motion)['cropvals']
+        cropvals = np.unique(np.concatenate((crop,crop2),axis=0))
         M = lambda x: np.delete(x, mask10, axis=0)
-        # np.savez(('masks/neighbor_mask%i_%i'%(mag,motion)),cropvals=cropvals)
+        # np.savez(('masks/larger_aperture/neighbor_mask%i_%i'%(mag,motion)),cropvals=cropvals)
 
         fpix = M(fpix)
-        flux, rawflux = self.aft.PLD(fpix,motion)
+        flux, rawflux = self.aft.PLD(fpix,motion,cropvals)
 
         return flux, rawflux
 
