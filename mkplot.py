@@ -26,7 +26,7 @@ def rawCDPP(mag,motion):
     rawCDPP = MN.CDPP(rawflux)
 
     return rawCDPP
-
+'''
 sk2 = sK2.Target(205998445)
 sk2.Transit()
 sk2.GeneratePSF(159000.0)
@@ -41,3 +41,6 @@ for m in tqdm(range(5)):
     fullcdpp.append(cdpp)
 
 print(fullcdpp)
+'''
+
+mkplot(12,19)
