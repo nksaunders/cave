@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 import matplotlib as mpl
 
-x1 = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+x1 = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]
 x = [val * 0.40212336 for val in x1]
 
 '''
