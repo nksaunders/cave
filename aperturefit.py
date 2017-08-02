@@ -51,17 +51,19 @@ class ApertureFit(object):
 
         return self.c_det, self.c_pix
 
-    def PLD(self,fpix,motion):
+    def PLD(self,fpix,motion,mask):
         '''
         Perform first order PLD on a light curve
         Returns: detrended light curve, raw light curve
         '''
 
+        outM = lambda x: np.delete(x,mask,axis=0)
         # hack
         naninds = np.where(np.isnan(fpix))
         fpix[naninds] = 0
 
         #  generate flux light curve
+        fpix = outM(fpix)
         fpix_rs = fpix.reshape(len(fpix),-1)
         flux = np.sum(fpix_rs,axis=1)
 
@@ -75,16 +77,17 @@ class ApertureFit(object):
         pca = PCA(n_components = 10)
         X2 = pca.fit_transform(f2)
 
-        X10 = np.load('masks/X10_%i.npz'%motion)['X']
+        X10 = np.load('masks/larger_aperture/X10_%i.npz'%motion)['X']
         X10crop = []
-        for i in range(len(X10)):
-            X10crop.append(X10[i][1:])
+        for i in X10:
+            X10crop.append(i[1:])
+        X10crop = np.array(outM(X10crop))
 
         # Combine them and add a column vector of 1s for stability
         X3 = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2])
-
         X = np.concatenate((X3,X10crop),axis=1)
-        # np.savez(('masks/X10_%i'%motion),X=X)
+
+        # np.savez(('masks/larger_aperture/X10_%i'%motion),X=X)
         MX = self.M(X)
 
         A = np.dot(MX.T, MX)
