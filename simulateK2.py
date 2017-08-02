@@ -25,7 +25,7 @@ class Target(object):
         self.factor = factor
 
         # set aperture size (number of pixels to a side)
-        self.aps = 15
+        self.aps = 19
 
     def Transit(self):
         '''
@@ -86,8 +86,8 @@ class Target(object):
         # generate PRF model with inter-pixel sensitivity variation
         cx = [1.0,0.0,-0.2]
         cy = [1.0,0.0,-0.2]
-        x0 = self.aps / 2.0 + 0.25
-        y0 = self.aps / 2.0 + 0.25
+        x0 = self.aps / 2.0# + 0.25
+        y0 = self.aps / 2.0# + 0.25
         sx = [0.5]
         sy = [0.5]
         rho = [0.05]
