@@ -56,7 +56,7 @@ class MotionNoise(object):
 
         return flux, rawflux
 
-    def Create(self, mag, f_n = 20):
+    def Create(self, mag, f_n = 25):
         '''
         calculates CDPP for light curves for coefficients 'f' up to 'f_n'
         parameter 'f_n': number of coefficients to test
@@ -151,7 +151,8 @@ class MotionNoise(object):
         pl.ylabel("Normalized CDPP")
         pl.title("Normalized CDPP vs. Motion Magnitude")
         pl.show()
-
+'''
 MN = MotionNoise()
-MN.Create(11)
+MN.Create(14)
 MN.Plot()
+'''

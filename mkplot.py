@@ -30,17 +30,14 @@ def rawCDPP(mag,motion):
 sk2 = sK2.Target(205998445)
 sk2.Transit()
 sk2.GeneratePSF(159000.0)
-
+'''
 fullcdpp = []
 for m in tqdm(range(5)):
     mag = m + 10
     cdpp = []
-    for mot in tqdm(range(20)):
+    for mot in tqdm(range(25)):
         motion = mot+1
         cdpp.append(rawCDPP(mag,motion))
     fullcdpp.append(cdpp)
 
 print(fullcdpp)
-'''
-
-mkplot(12,19)
