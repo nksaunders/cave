@@ -1,16 +1,42 @@
-from everest.math import SavGol
-import everest
 import numpy as np
+import sputter as sp
+import matplotlib.pyplot as pl
+import everest as ev
+import csv
+from numpy import genfromtxt
+from everest import detrender
+from everest.math import SavGol, Scatter, Downbin
+from astropy.stats import median_absolute_deviation as mad
+from numpy.polynomial import polynomial as P
+from tqdm import tqdm
+import everest
 
-ID = 212278696
+datapath = '/Users/nks1994/Documents/Research/everest/docs/c0'
+dataloc = '.csv'
 
-# 9th: 212273934
-# 10th: 212278696
+# CAMPAIGN 1
 
-star = everest.Everest(ID)
-time = star.apply_mask(star.time)
-flux = star.apply_mask(star.flux)
+tags = []
+mags = []
+with open((datapath+str(1)+dataloc),'r') as f:
+    data = csv.reader(f)
+    for i,row in enumerate(data):
+        if i == 0:
+            continue
+        else:
+            tags.append(row[0])
+            mags.append(row[1])
 
-sgflux = SavGol(flux)
+A = []
 
-print(np.mean(sgflux))
+for t in tags[:500]:
+    t = int(t)
+    star = everest.Everest(t)
+    flux = star.apply_mask(star.flux)
+    sgflux = SavGol(flux)
+    A.append(np.mean(sgflux))
+
+
+np.savez('A.npz', A = A, mags = mags)
+
+import pdb; pdb.set_trace()
