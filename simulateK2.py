@@ -152,3 +152,15 @@ class Target(object):
             y0[n] = np.sum([(ny-j-0.5)*fpix[n][j,:] for j in range(ny)]) / np.sum(fpix[n])
 
         return x0,y0
+
+    def NoiseFactor(counts):
+    '''
+    Returns the factor by which to multiply the square root of the number
+    of counts to get the approximate noise level for a given pixel.
+
+    '''
+
+    x = counts
+    
+    a, b, c, d, e = 0.19558, 506.59143, 0.05561, 6131.06708, 0.03664
+    return a * np.exp(-x / b) + c * np.exp(-x / d) + e
