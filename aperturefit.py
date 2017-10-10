@@ -83,21 +83,9 @@ class ApertureFit(object):
             X10crop.append(i[1:])
         X10crop = np.array(outM(X10crop))
 
-        X11 = np.load('masks/larger_aperture/X11_%i.npz'%motion)['X']
-        X11crop = []
-        for i in X11:
-            X11crop.append(i[1:])
-        X11crop = np.array(outM(X11crop))
-
-        X12 = np.load('masks/larger_aperture/X11_%i.npz'%motion)['X']
-        X12crop = []
-        for i in X12:
-            X12crop.append(i[1:])
-        X12crop = np.array(outM(X12crop))
-
         # Combine them and add a column vector of 1s for stability
         X3 = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2])
-        X = np.concatenate((X3,X10crop,X11crop,X12crop),axis=1)
+        X = np.concatenate((X3,X10crop),axis=1)
 
         # np.savez(('masks/larger_aperture/X10_%i'%motion),X=X)
         MX = self.M(X)
