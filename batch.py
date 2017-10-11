@@ -14,11 +14,6 @@ niter = 5
 mags = np.arange(10., 17.5, 0.5)
 m_mags = np.arange(0., 22, 1)
 
-# DEBUG
-niter = 2
-mags = [10., 11., 12., 13.]
-m_mags  = [0., 1.]
-
 def Simulate(arg):
     iter, mag, m_mag = arg
     print("Running mag = %.2f, m_mag = %.2f" % (mag, m_mag))
