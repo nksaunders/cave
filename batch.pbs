@@ -11,4 +11,4 @@ export OPENBLAS_NUM_THREADS=1
 cd /usr/lusers/rodluger/src/CAVE/
 
 # Run on multiple nodes with MPI
-mpirun -np $NPROC python batch.py
+mpirun -np 120 python batch.py
