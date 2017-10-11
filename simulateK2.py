@@ -15,13 +15,14 @@ import os
 
 class Target(object):
 
-    def __init__(self, ID, per = 15, dur = 0.5, depth = 0.01, factor = 1800):
+    def __init__(self, ID, per = 15, dur = 0.5, depth = 0.01, factor = 1800, ftpf = None):
 
         # initialize variables
         self.ID = ID
         self.per = per
         self.dur = dur
         self.depth = depth
+        self.ftpf = ftpf
 
         # set aperture size (number of pixels to a side)
         self.aps = 19
@@ -49,11 +50,13 @@ class Target(object):
         self.A = self.Amplitude(mag)
 
         # read in relevant data
-        ID = 205998445
-        client = k2plr.API()
-        star = client.k2_star(self.ID)
-        tpf = star.get_target_pixel_files(fetch = True)[0]
-        ftpf = os.path.join(KPLR_ROOT, 'data', 'k2', 'target_pixel_files', '%d' % self.ID, tpf._filename)
+        if self.ftpf is None:
+            client = k2plr.API()
+            star = client.k2_star(self.ID)
+            tpf = star.get_target_pixel_files(fetch = True)[0]
+            ftpf = os.path.join(KPLR_ROOT, 'data', 'k2', 'target_pixel_files', '%d' % self.ID, tpf._filename)
+        else:
+            ftpf = self.ftpf
         with pyfits.open(ftpf) as f:
             self.xpos = f[1].data['pos_corr1']
             self.ypos = f[1].data['pos_corr2']
