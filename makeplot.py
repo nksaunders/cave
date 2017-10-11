@@ -5,7 +5,7 @@ import aperturefit as aft
 from tqdm import tqdm
 
 # Magnitude and motion arrays
-mags = np.arange(10., 16., 1.)
+mags = np.arange(10., 16., 0.5)
 m_mags = [1, 2, 5, 10, 20]
 
 def MakePlots(nmags = 5, nmot = 22, pwd = 'batch/'):
