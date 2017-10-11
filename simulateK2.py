@@ -22,7 +22,6 @@ class Target(object):
         self.per = per
         self.dur = dur
         self.depth = depth
-        self.factor = factor
 
         # set aperture size (number of pixels to a side)
         self.aps = 19
@@ -40,14 +39,14 @@ class Target(object):
 
         return self.trn
 
-    def GeneratePSF(self, f_mag, motion_mag = 1.0):
+    def GeneratePSF(self, mag, motion_mag = 1.0):
         '''
         Generate a PSF model that includes modeled inter-pixel sensitivity variation.
         Model includes photon noise and background nosie.
         Returns: fpix and ferr
         '''
 
-        self.A = f_mag
+        self.A = self.Amplitude(mag)
 
         # read in relevant data
         ID = 205998445
@@ -86,11 +85,11 @@ class Target(object):
         # generate PRF model with inter-pixel sensitivity variation
         cx = [1.0,0.0,-0.2]
         cy = [1.0,0.0,-0.2]
-        x0 = self.aps / 2.0# + 0.25
-        y0 = self.aps / 2.0# + 0.25
-        sx = [0.5]
-        sy = [0.5]
-        rho = [0.05]
+        x0 = (self.aps / 2.0) + 0.2 * np.random.randn() # + 0.25
+        y0 = (self.aps / 2.0) + 0.2 * np.random.randn() # + 0.25
+        sx = [0.5 + 0.05 * np.random.randn()]
+        sy = [0.5 + 0.05 * np.random.randn()]
+        rho = [0.05 + 0.02 * np.random.randn()]
         neighborcoords = [4.,4.]
 
         magdiff = 1.0
@@ -102,7 +101,7 @@ class Target(object):
 
         is_neighbor = False
 
-        for c in range(1000):
+        for c in range(100):
             for i in range(self.aps):
                 for j in range(self.aps):
                     # contribution from target
@@ -117,20 +116,21 @@ class Target(object):
 
                     self.target[c][i][j] = target_val
 
-
+                    factor = self.NoiseFactor(self.fpix[c][i][j])
                     # add photon noise
                     if self.fpix[c][i][j] < 0:
                         self.fpix[c][i][j] = 0
-                    self.ferr[c][i][j] = np.sqrt(self.fpix[c][i][j] / self.factor)
+                    self.ferr[c][i][j] = np.sqrt(self.fpix[c][i][j]) * factor
                     randnum = np.random.randn()
                     self.fpix[c][i][j] += self.ferr[c][i][j] * randnum
                     self.target[c][i][j] += self.ferr[c][i][j] * randnum
 
+                    '''
                     # add background noise
                     noise = np.sqrt(background_level) * np.random.randn()
                     self.fpix[c][i][j] += noise
                     self.target[c][i][j] += noise
-
+                    '''
             # multiply by intra-pixel variation
             self.fpix[c] *= intra
             self.target[c] *= intra
@@ -153,14 +153,22 @@ class Target(object):
 
         return x0,y0
 
-    def NoiseFactor(counts):
-    '''
-    Returns the factor by which to multiply the square root of the number
-    of counts to get the approximate noise level for a given pixel.
+    def NoiseFactor(self,counts):
+        '''
+        Returns the factor by which to multiply the square root of the number
+        of counts to get the approximate noise level for a given pixel.
+        '''
 
-    '''
+        x = counts
 
-    x = counts
-    
-    a, b, c, d, e = 0.19558, 506.59143, 0.05561, 6131.06708, 0.03664
-    return a * np.exp(-x / b) + c * np.exp(-x / d) + e
+        a, b, c, d, e = 0.19558, 506.59143, 0.05561, 6131.06708, 0.03664
+        return a * np.exp(-x / b) + c * np.exp(-x / d) + e
+
+    def Amplitude(self,mag):
+        '''
+        Returns the amplitude of the PSF for a star of a given magnitude.
+        '''
+
+        x = mag
+        a,b,c,d = 1.64864230e+07, .93, -7.35240947e+00, -6.42400461e+03
+        return a * np.exp(-b * (x+c)) + d
