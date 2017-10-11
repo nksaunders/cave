@@ -17,7 +17,7 @@ m_mags = np.arange(0., 22, 1)
 def Simulate(arg):
     iter, mag, m_mag = arg
     print("Running mag = %.2f, m_mag = %.2f" % (mag, m_mag))
-    sK2 = simulateK2.Target(205998445, depth = 0., npts = 100, ftpf = os.path.expanduser('~/.kplr/data/k2/target_pixel_files/205998445/ktwo205998445-c03_lpd-targ.fits.gz'))
+    sK2 = simulateK2.Target(205998445, npts = 1000, ftpf = os.path.expanduser('~/.kplr/data/k2/target_pixel_files/205998445/ktwo205998445-c03_lpd-targ.fits.gz'))
     sK2.Transit()
     fpix, target, ferr = sK2.GeneratePSF(mag, motion_mag = m_mag)
     np.savez('batch/%2dmag%.2fmotion%.2f' % (iter, mag, m_mag), fpix = fpix)
