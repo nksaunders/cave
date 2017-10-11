@@ -29,10 +29,10 @@ class MotionNoise(object):
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
-    def DetrendFpix(self, mag, motion):
+    def DetrendFpix(self, mag, motion, pwd = 'stars/larger_aperture/'):
 
 
-        path = 'stars/larger_aperture/mag' + str(mag) + 'motion' + str(motion) + '.npz'
+        path = pwd + 'mag' + str(mag) + 'motion' + str(motion) + '.npz'
         fpix = np.load(path)['fpix']
 
         fpix_rs = fpix.reshape(len(fpix),-1)
