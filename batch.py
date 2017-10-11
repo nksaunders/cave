@@ -11,7 +11,7 @@ import os
 niter = 5
 
 # Magnitude and motion arrays
-mags = np.arange(10., 17.5, 0.5)
+mags = np.arange(10., 16., 0.5)
 m_mags = np.arange(0., 22, 1)
 
 def Simulate(arg):
@@ -30,6 +30,7 @@ def Benchmark():
     import matplotlib.pyplot as pl
     
     # Compare zero-motion synthetic data to original Kepler raw CDPP
+    print("Plotting Figure 1...")
     _, kepler_kp, kepler_cdpp6 = np.loadtxt(os.path.join(EVEREST_SRC, 'missions', 'k2', 'tables', 'kepler.cdpp'), unpack = True)
     fig, ax = pl.subplots(1)
     ax.plot(kepler_kp, kepler_cdpp6, 'y.', alpha = 0.01, zorder = -1)
@@ -58,6 +59,7 @@ def Benchmark():
     ax.legend(loc = 'best')
     
     # Compare 1x motion to K2 raw CDPP from campaign 3
+    print("Plotting Figure 2...")
     _, kp, cdpp6r, _, _, _, _, _, _ = np.loadtxt(os.path.join(EVEREST_SRC, 'missions', 'k2', 'tables', 'c03_nPLD.cdpp'), unpack = True, skiprows = 2)
     fig, ax = pl.subplots(1)
     ax.plot(kp, cdpp6r, 'r.', alpha = 0.05, zorder = -1)
@@ -82,6 +84,35 @@ def Benchmark():
     ax.set_xlabel('Kepler Magnitude')
     ax.set_ylabel('CDPP [ppm]')
     ax.set_ylim(-30, 1500)
+    ax.set_xlim(8, 18)
+    ax.legend(loc = 'best')
+    
+    # Plot several different motion vectors
+    print("Plotting Figure 3...")
+    _, kp, cdpp6r, _, _, _, _, _, _ = np.loadtxt(os.path.join(EVEREST_SRC, 'missions', 'k2', 'tables', 'c03_nPLD.cdpp'), unpack = True, skiprows = 2)
+    fig, ax = pl.subplots(1, figsize = (6, 7))
+    ax.plot(kp, cdpp6r, 'r.', alpha = 0.05, zorder = -1)
+    ax.set_rasterization_zorder(-1)
+    bins = np.arange(7.5,18.5,0.5)
+    by = np.zeros_like(bins) * np.nan
+    for b, bin in enumerate(bins):
+        i = np.where((cdpp6r > -np.inf) & (cdpp6r < np.inf) & (kp >= bin - 0.5) & (kp < bin + 0.5))[0]
+        if len(i) > 10:
+            by[b] = np.median(cdpp6r[i])
+    ax.plot(bins, by, 'ro', label = 'Raw K2', markeredgecolor = 'k')
+    for m_mag, color in zip([1, 2, 5, 10, 20], ['b', 'g', 'y', 'orange', 'k']):
+        cdpp = [[] for mag in mags]
+        for i, mag in enumerate(mags):
+            for iter in range(niter):
+                fpix = np.load('batch/%2dmag%.2fmotion%.2f.npz' % (iter, mag, m_mag))['fpix']
+                flux = np.nansum(fpix, axis = (1,2))
+                cdpp[i].append(CDPP(flux))
+        cdpp = np.nanmean(np.array(cdpp), axis = 1)
+        ax.plot(mags, cdpp, '.', color = color, label = 'Synthetic (%dx motion)' % m_mag)   
+        ax.plot(mags, cdpp, '-', color = color)
+    ax.set_xlabel('Kepler Magnitude')
+    ax.set_ylabel('CDPP [ppm]')
+    ax.set_ylim(-30, 2500)
     ax.set_xlim(8, 18)
     ax.legend(loc = 'best')
     
