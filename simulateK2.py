@@ -104,7 +104,7 @@ class Target(object):
 
         is_neighbor = False
 
-        for c in range(100):
+        for c in range(1000):
             for i in range(self.aps):
                 for j in range(self.aps):
                     # contribution from target
