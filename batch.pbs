@@ -1,5 +1,5 @@
 #!/bin/sh
-#PBS -l nodes=10:ppn=12,feature=12core,walltime=00:12:00:00
+#PBS -l nodes=20:ppn=12,feature=12core,walltime=00:12:00:00
 #PBS -j oe
 #PBS -o /home/rodluger/src/CAVE/batch.log
 #PBS -m abe
@@ -11,4 +11,4 @@ export OPENBLAS_NUM_THREADS=1
 cd /usr/lusers/rodluger/src/CAVE/
 
 # Run on multiple nodes with MPI
-mpirun -np 120 python batch.py
+mpirun -np 240 python batch.py
