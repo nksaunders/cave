@@ -8,6 +8,7 @@ from tqdm import tqdm
 from everest import detrender
 from everest.math import SavGol, Scatter, Downbin
 from astropy.stats import median_absolute_deviation as mad
+import os
 
 class MotionNoise(object):
     '''
@@ -29,30 +30,46 @@ class MotionNoise(object):
         self.trn = self.sK2.Transit()
         self.aft = af.ApertureFit(self.trn)
 
-    def DetrendFpix(self, mag, motion, pwd = 'stars/larger_aperture/'):
-
-
-        path = pwd + 'mag' + str(mag) + 'motion' + str(motion) + '.npz'
+    def DetrendFpix(self, mag, motion, star = 0, neighbors = [1, 2, 3, 4], pwd = 'batch/'):
+        
+        # Target
+        path = os.path.join(pwd, '%02dmag%.2fmotion%.2f.npz' % (star, mag, motion))
         fpix = np.load(path)['fpix']
-
+        
+        # Crop target flux
         fpix_rs = fpix.reshape(len(fpix),-1)
         tempflux = np.sum(fpix_rs,axis=1)
-
         crop = np.where(tempflux < (0.99*np.mean(tempflux)))[0]
-
         x0, y0 = self.sK2.CenterOfFlux(fpix)
         crop2 = []
         for n in range(len(fpix)):
             if (np.sqrt((x0[n]-19/2)**2+(y0[n]-19/2)**2) > 8.5):
                 crop2.append(n)
-
-        mask10 = np.load('masks/larger_aperture/neighbor_mask10_%i.npz'%motion)['cropvals']
-        cropvals = np.unique(np.concatenate((crop,crop2),axis=0))
-        M = lambda x: np.delete(x, mask10, axis=0)
-        # np.savez(('masks/larger_aperture/neighbor_mask%i_%i'%(mag,motion)),cropvals=cropvals)
-
-        fpix = M(fpix)
-        flux, rawflux = self.aft.PLD(fpix,motion,cropvals)
+        cropvalsT = np.unique(np.concatenate((crop,crop2),axis=0))
+        
+        # Neighbors
+        fpixN = [None for i in neighbors]
+        cropvalsN = [None for i in neighbors]
+        for i, neighbor in enumerate(neighbors):
+            path = os.path.join(pwd, '%02dmag%.2fmotion%.2f.npz' % (neighbor, mag, motion))
+            fpixN[i] = np.load(path)['fpix']
+        
+            # Crop neighbors
+            fpix_rs = fpix.reshape(len(fpixN[i]),-1)
+            tempflux = np.sum(fpix_rs,axis=1)
+            crop = np.where(tempflux < (0.99*np.mean(tempflux)))[0]
+            x0, y0 = self.sK2.CenterOfFlux(fpixN[i])
+            crop2 = []
+            for n in range(len(fpixN[i])):
+                if (np.sqrt((x0[n]-19/2)**2+(y0[n]-19/2)**2) > 8.5):
+                    crop2.append(n)
+            cropvalsN[i] = np.unique(np.concatenate((crop,crop2),axis=0))
+        cropvalsN = np.unique(np.concatenate(cropvalsN, axis=0))
+        
+        # Combine all the crop indices
+        cropvals = np.unique(np.concatenate((cropvalsT, cropvalsN),axis=0))
+        
+        flux, rawflux = self.aft.PLD(fpix, motion, cropvals, fpixN = fpixN)
 
         return flux, rawflux
 

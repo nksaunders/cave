@@ -2,40 +2,46 @@ import numpy as np
 import sputter as sp
 import matplotlib.pyplot as pl
 import aperturefit as aft
+from tqdm import tqdm
 
+# Magnitude and motion arrays
+mags = np.arange(10., 16., 1.)
+m_mags = [1, 2, 5, 10, 20]
 
-def MakePlots(nmags = 5, nmot = 22, pwd = 'stars/larger_aperture/'):
+def MakePlots(nmags = 5, nmot = 22, pwd = 'batch/'):
 
     CDPPs = []
     rCDPPs = []
     MN = sp.MotionNoise()
 
-    for n in range(nmags):
-
-        mag = n + 10
+    for mag in mags:
+    
         mcdpp = []
         rcdpp = []
 
-        for mot in range(nmot):
-            flux, rawflux = MN.DetrendFpix(mag, mot, pwd = pwd)
+        print("Running magnitude %.1f..." % mag)
 
+        for mot in m_mags:
+            flux, rawflux = MN.DetrendFpix(mag, mot, pwd = pwd, star = 0, neighbors = [1])
             mcdpp.append(MN.CDPP(flux))
             rcdpp.append(MN.CDPP(rawflux))
-
         CDPPs.append(mcdpp)
         rCDPPs.append(rcdpp)
-
-    for i,c in enumerate(CDPPs):
+    
+    # Save
+    np.savez('batch/detrended_cdpps.npz', CDPPs = CDPPs, m_mags = m_mags, mags = mags)
+    
+    for i, c in enumerate(CDPPs):
 
         fig = pl.figure()
 
-        pl.plot(c,'r')
-        pl.plot(rCDPPs[i],'k')
+        pl.plot(m_mags, c,'r')
+        pl.plot(m_mags, rCDPPs[i],'k')
 
-        pl.title(r'$K_p\ Mag = $' + str(i+10))
+        pl.title(r'$K_p\ Mag = $' + str(mags[i]))
         pl.xlabel('K2 Roll Coefficient')
         pl.ylabel('CDPP (ppm)')
 
     pl.show()
 
-MakePlots(nmags=5,nmot=12)
+MakePlots()

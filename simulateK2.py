@@ -179,5 +179,5 @@ class Target(object):
         '''
 
         x = mag
-        a,b,c,d = 1.64864230e+07, .93, -7.35240947e+00, -6.42400461e+03
-        return a * np.exp(-b * (x+c)) + d
+        a,b,c = 1.65e+07, 0.93, -7.35
+        return a * np.exp(-b * (x+c)) 

@@ -51,7 +51,7 @@ class ApertureFit(object):
 
         return self.c_det, self.c_pix
 
-    def PLD(self,fpix,motion,mask):
+    def PLD(self,fpix,motion,mask,fpixN=None):
         '''
         Perform first order PLD on a light curve
         Returns: detrended light curve, raw light curve
@@ -76,32 +76,60 @@ class ApertureFit(object):
         f2 = np.product(list(multichoose(f1.T, 2)), axis = 1).T
         pca = PCA(n_components = 10)
         X2 = pca.fit_transform(f2)
+        
+        # Neighbors?
+        if fpixN is not None:
+            
+            # Get the design matrix for each neighbor
+            XN = [None for i in fpixN]
+            for i in range(len(fpixN)):
+                
+                # Mask each of the neighbors' pixel flux arrays
+                fpixN[i] = outM(fpixN[i])
+            
+                #  generate flux light curve
+                fpixN_rs = fpix.reshape(len(fpixN[i]),-1)
+                fluxN = np.sum(fpixN_rs,axis=1)
 
-        X10 = np.load('masks/larger_aperture/X10_%i.npz'%motion)['X']
-        X10crop = []
-        for i in X10:
-            X10crop.append(i[1:])
-        X10crop = np.array(outM(X10crop))
+                # First order PLD
+                f1 = fpixN_rs / fluxN.reshape(-1,1)
+                pca = PCA(n_components = 20)
+                X1N = pca.fit_transform(f1)
 
-        # Combine them and add a column vector of 1s for stability
-        X3 = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2])
-        X = np.concatenate((X3,X10crop),axis=1)
-
+                # Second order PLD
+                f2 = np.product(list(multichoose(f1.T, 2)), axis = 1).T
+                pca = PCA(n_components = 10)
+                X2N = pca.fit_transform(f2)
+                
+                # Merge
+                XN[i] = np.hstack([X1N, X2N])
+            
+            # Concatenate all of them
+            Xneighbors = np.hstack(XN)
+            
+            # Concatenate to target's design matrix
+            X = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2, Xneighbors])
+            
+        else:
+            
+            X = np.hstack([np.ones(X1.shape[0]).reshape(-1, 1), X1, X2])
+        
+        # New transit mask w/ indices aligned correctly
+        trn = outM(self.trn)
+        trninds = np.where(trn < 1)
+        trnmask = lambda x: np.delete(x, trninds, axis = 0)
+        
         # np.savez(('masks/larger_aperture/X10_%i'%motion),X=X)
-        MX = self.M(X)
+        MX = trnmask(X)
 
         A = np.dot(MX.T, MX)
-        B = np.dot(MX.T, self.M(flux))
+        B = np.dot(MX.T, trnmask(flux))
         C = np.linalg.solve(A, B)
 
         # compute detrended light curve
         model = np.dot(X, C)
 
         detrended = flux - model + np.nanmean(flux)
-
-        # folded
-        # D = (detrended - np.dot(C[1:], X[:,1:].T) + np.nanmedian(detrended)) / np.nanmedian(detrended)
-        # T = (t - 5.0 - per / 2.) % per - per / 2.
 
         return detrended, flux
 
