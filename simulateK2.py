@@ -15,7 +15,7 @@ import os
 
 class Target(object):
 
-    def __init__(self, ID, per = 15, dur = 0.5, depth = 0.01, factor = 1800, ftpf = None):
+    def __init__(self, ID, per = 15, dur = 0.5, depth = 0.01, factor = 1800, ftpf = None, npts = 1000):
 
         # initialize variables
         self.ID = ID
@@ -23,6 +23,7 @@ class Target(object):
         self.dur = dur
         self.depth = depth
         self.ftpf = ftpf
+        self.npts = npts
 
         # set aperture size (number of pixels to a side)
         self.aps = 19
@@ -34,13 +35,16 @@ class Target(object):
         Returns: transit model
         '''
 
-        self.fpix = np.zeros((1000,self.aps,self.aps))
+        self.fpix = np.zeros((self.npts,self.aps,self.aps))
         self.t = np.linspace(0,90,len(self.fpix))
-        self.trn = Transit(self.t, t0 = 5.0, per = self.per, dur = self.dur, depth = self.depth)
+        if self.depth == 0:
+            self.trn = np.ones(self.npts)
+        else:
+            self.trn = Transit(self.t, t0 = 5.0, per = self.per, dur = self.dur, depth = self.depth)
 
         return self.trn
 
-    def GeneratePSF(self, mag, motion_mag = 1.0):
+    def GeneratePSF(self, mag, motion_mag = 1.0, background_level = 0., noise_factor = 0.025):
         '''
         Generate a PSF model that includes modeled inter-pixel sensitivity variation.
         Model includes photon noise and background nosie.
@@ -72,22 +76,22 @@ class Target(object):
                 self.ypos[i] = 0
 
         # import pdb; pdb.set_trace()
-        self.xpos = self.xpos[1000:2000] * motion_mag
-        self.ypos = self.ypos[1000:2000] * motion_mag
+        self.xpos = self.xpos[1000:1000+self.npts] * motion_mag
+        self.ypos = self.ypos[1000:1000+self.npts] * motion_mag
 
         # define intra-pixel sensitivity variation
         intra = np.zeros((self.aps,self.aps))
         for i in range(self.aps):
             for j in range(self.aps):
-                intra[i][j] = (0.995 + np.random.randint(10) / 1000)
+                intra[i][j] = (0.975 + 0.01 * np.random.randn())
 
         # mask transits
         self.naninds = np.where(self.trn < 1)
         self.M = lambda x: np.delete(x, self.naninds, axis = 0)
 
         # generate PRF model with inter-pixel sensitivity variation
-        cx = [1.0,0.0,-0.2]
-        cy = [1.0,0.0,-0.2]
+        cx = [1.0,0.0,-0.3]
+        cy = [1.0,0.0,-0.3]
         x0 = (self.aps / 2.0) + 0.2 * np.random.randn() # + 0.25
         y0 = (self.aps / 2.0) + 0.2 * np.random.randn() # + 0.25
         sx = [0.5 + 0.05 * np.random.randn()]
@@ -100,11 +104,11 @@ class Target(object):
 
         self.target = np.zeros((len(self.fpix),self.aps,self.aps))
         self.ferr = np.zeros((len(self.fpix),self.aps,self.aps))
-        background_level = 800
+        
 
         is_neighbor = False
 
-        for c in range(1000):
+        for c in range(self.npts):
             for i in range(self.aps):
                 for j in range(self.aps):
                     # contribution from target
@@ -118,22 +122,24 @@ class Target(object):
                         self.fpix[c][i][j] = target_val
 
                     self.target[c][i][j] = target_val
-
-                    factor = self.NoiseFactor(self.fpix[c][i][j])
-                    # add photon noise
-                    if self.fpix[c][i][j] < 0:
-                        self.fpix[c][i][j] = 0
-                    self.ferr[c][i][j] = np.sqrt(self.fpix[c][i][j]) * factor
+                    
+                    # add background noise
+                    noise = background_level * np.random.randn()
+                    self.fpix[c][i][j] += noise
+                    self.target[c][i][j] += noise
+                    
+                    # ensure positive
+                    while self.fpix[c][i][j] < 0:
+                        noise = background_level * np.random.randn()
+                        self.fpix[c][i][j] = noise
+                        self.fpix[c][i][j] = noise
+                     
+                    # add photon noise   
+                    self.ferr[c][i][j] = np.sqrt(np.abs(self.fpix[c][i][j])) * noise_factor
                     randnum = np.random.randn()
                     self.fpix[c][i][j] += self.ferr[c][i][j] * randnum
                     self.target[c][i][j] += self.ferr[c][i][j] * randnum
-
-                    '''
-                    # add background noise
-                    noise = np.sqrt(background_level) * np.random.randn()
-                    self.fpix[c][i][j] += noise
-                    self.target[c][i][j] += noise
-                    '''
+   
             # multiply by intra-pixel variation
             self.fpix[c] *= intra
             self.target[c] *= intra
