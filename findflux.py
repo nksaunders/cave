@@ -29,7 +29,7 @@ with open((datapath+str(1)+dataloc),'r') as f:
 
 A = []
 
-for t in tags[:500]:
+for t in tqdm(tags):
     t = int(t)
     star = everest.Everest(t)
     flux = star.apply_mask(star.flux)
@@ -37,6 +37,6 @@ for t in tags[:500]:
     A.append(np.mean(sgflux))
 
 
-np.savez('A.npz', A = A, mags = mags)
+np.savez('A2.npz', A = A, mags = mags)
 
 import pdb; pdb.set_trace()
