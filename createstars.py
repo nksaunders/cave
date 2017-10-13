@@ -26,3 +26,13 @@ fpix = Simulate(205998445, 15., 0)
 np.savez('stars/tests/mag11motion0',fpix=fpix)
 
 import pdb; pdb.set_trace()
+'''
+import simulateK2target as sK2
+import matplotlib.pyplot as pl
+import numpy as np
+t = sK2.Target(205998445)
+fp, ta, fe = t.GeneratePSF(12.,roll=5.)
+
+flux = np.sum(fp.reshape(len(fp),-1),axis=1)
+pl.plot(flux,'k.');pl.show()
+'''
