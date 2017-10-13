@@ -79,7 +79,7 @@ class Target(object):
         self.xpos = self.xpos[1000:1000+self.npts] * motion_mag
         self.ypos = self.ypos[1000:1000+self.npts] * motion_mag
 
-        # define intra-pixel sensitivity variation
+        # define inter-pixel sensitivity variation
         intra = np.zeros((self.aps,self.aps))
         for i in range(self.aps):
             for j in range(self.aps):
@@ -89,7 +89,7 @@ class Target(object):
         self.naninds = np.where(self.trn < 1)
         self.M = lambda x: np.delete(x, self.naninds, axis = 0)
 
-        # generate PRF model with inter-pixel sensitivity variation
+        # generate PRF model with intra-pixel sensitivity variation
         cx = [1.0,0.0,-0.3]
         cy = [1.0,0.0,-0.3]
         x0 = (self.aps / 2.0) + 0.2 * np.random.randn() # + 0.25
@@ -104,7 +104,7 @@ class Target(object):
 
         self.target = np.zeros((len(self.fpix),self.aps,self.aps))
         self.ferr = np.zeros((len(self.fpix),self.aps,self.aps))
-        
+
 
         is_neighbor = False
 
@@ -122,25 +122,25 @@ class Target(object):
                         self.fpix[c][i][j] = target_val
 
                     self.target[c][i][j] = target_val
-                    
+
                     # add background noise
                     noise = background_level * np.random.randn()
                     self.fpix[c][i][j] += noise
                     self.target[c][i][j] += noise
-                    
+
                     # ensure positive
                     while self.fpix[c][i][j] < 0:
                         noise = background_level * np.random.randn()
                         self.fpix[c][i][j] = noise
                         self.fpix[c][i][j] = noise
-                     
-                    # add photon noise   
+
+                    # add photon noise
                     self.ferr[c][i][j] = np.sqrt(np.abs(self.fpix[c][i][j])) * noise_factor
                     randnum = np.random.randn()
                     self.fpix[c][i][j] += self.ferr[c][i][j] * randnum
                     self.target[c][i][j] += self.ferr[c][i][j] * randnum
-   
-            # multiply by intra-pixel variation
+
+            # multiply by inter-pixel variation
             self.fpix[c] *= intra
             self.target[c] *= intra
 
