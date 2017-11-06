@@ -1,4 +1,4 @@
-# CAVE
+# cave
 **Crowded Aperture Variability Extraction**
 
 Developing methods to extract and remove intrumental noise from crowded aperture *K2* exoplanet targets. Current scripts in development: 
