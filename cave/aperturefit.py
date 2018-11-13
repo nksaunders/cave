@@ -26,12 +26,11 @@ class ApertureFit(object):
         self.naninds = np.where(self.trn < 1)
         self.M = lambda x: np.delete(x, self.naninds, axis = 0)
 
-    def Crowding(self,fpix,target):
+    def compute_crowding(self, fpix, target):
         '''
         Calculates and returns pixel crowding (c_pix) and detector crowding (c_det)
         Crowding defined by F_target / F_total
         '''
-        # fpix = self.fpix
 
         # crowding parameter for each pixel
         self.c_pix = np.zeros((len(fpix),5,5))
@@ -51,7 +50,7 @@ class ApertureFit(object):
 
         return self.c_det, self.c_pix
 
-    def PLD(self,fpix,motion,mask):
+    def perform_PLD(self, fpix, motion, mask):
         '''
         Perform first order PLD on a light curve
         Returns: detrended light curve, raw light curve
@@ -105,7 +104,7 @@ class ApertureFit(object):
 
         return detrended, flux
 
-    def RecoverTransit(self, lightcurve_in):
+    def recover_transit(self, lightcurve_in):
         '''
         Solve for depth of transit in detrended lightcurve
         Returns: recovered depth of transit in light curve
@@ -132,7 +131,7 @@ class ApertureFit(object):
 
         return rec_depth
 
-    def AperturePLD(self, aperture, fpix):
+    def perform_aperture_PLD(self, aperture, fpix):
         '''
         Performs PLD on only a desired region of the detector
         Takes parameters: light curve (fpix), and aperture containing desired region
@@ -141,7 +140,6 @@ class ApertureFit(object):
 
         aperture = [aperture for i in range(len(fpix))]
 
-        # import pdb; pdb.set_trace()
         fpix_rs = (fpix*aperture).reshape(len(fpix),-1)
         fpix_ap = np.zeros((len(fpix),len(np.delete(fpix_rs[0],np.where(np.isnan(fpix_rs[0]))))))
 
@@ -162,4 +160,4 @@ class ApertureFit(object):
         model = np.dot(X, C)
         detrended = flux - model + np.nanmean(flux)
 
-        return aperture,detrended,flux
+        return aperture, detrended, flux
